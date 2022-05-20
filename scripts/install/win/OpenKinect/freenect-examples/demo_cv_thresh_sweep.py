@@ -21,12 +21,10 @@ def disp_thresh(lower, upper):
     cv.WaitKey(10)
 
 
-lower = 0
-upper = 100
 max_upper = 2048
-while upper < max_upper:
+lower = 0
+for upper in range(100, max_upper, 20):
     print('%d < depth < %d' % (lower, upper))
     disp_thresh(lower, upper)
     time.sleep(.1)
     lower += 20
-    upper += 20

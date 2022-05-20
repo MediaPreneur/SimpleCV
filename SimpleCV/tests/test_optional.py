@@ -67,22 +67,17 @@ def test_detection_barcode():
     except:
         return None
 
-    img1 = Image(testimage)
-    img2 = Image(testbarcode)
+    if SHOW_WARNING_TESTS:
+        img1 = Image(testimage)
+        img2 = Image(testbarcode)
 
-    if( SHOW_WARNING_TESTS ):
-        nocode = img1.findBarcode()
-        if nocode: #we should find no barcode in our test image
+        if nocode := img1.findBarcode():
             assert False
         code = img2.findBarcode()
         code.draw()
-        if code.points:
-            pass
         result = [img1,img2]
         name_stem = "test_detection_barcode"
         perform_diff(result,name_stem)
-    else:
-        pass
 
 def test_detection_ocr():
     img = Image(ocrimage)
@@ -101,16 +96,11 @@ def test_image_webp_load():
     except:
         if( SHOW_WARNING_TESTS ):
             logger.warning("Couldn't run the webp test as optional webm library required")
-        pass
-
     else:
         img = Image(webp)
 
         if len(img.toString()) <= 1:
             assert False
-
-        else:
-            pass
 
 def test_image_webp_save():
     #only run if webm suppport exist on system
@@ -119,14 +109,10 @@ def test_image_webp_save():
     except:
         if( SHOW_WARNING_TESTS ):
             logger.warning("Couldn't run the webp test as optional webm library required")
-        pass
-
     else:
         img = Image('simplecv')
         tf = tempfile.NamedTemporaryFile(suffix=".webp")
-        if img.save(tf.name):
-            pass
-        else:
+        if not img.save(tf.name):
             assert False
 
 def test_screenshot():
@@ -135,14 +121,11 @@ def test_screenshot():
     except:
         if( SHOW_WARNING_TESTS ):
             logger.warning("Couldn't run the pyscreenshot test. Install pyscreenshot library")
-        pass
     sc = ScreenCamera()
     res = sc.getResolution()
     img = sc.getImage()
     crop = (res[0]/4,res[1]/4,res[0]/2,res[1]/2)
     sc.setROI(crop)
     cropImg = sc.getImage()
-    if img and cropImg :
-        assert True
-    else:
+    if not img or not cropImg:
         assert False

@@ -89,10 +89,10 @@ class ImageSet(list):
         if isinstance(directory,list):
             if isinstance(directory[0], Image):
                 super(ImageSet,self).__init__(directory)
-            elif isinstance(directory[0], str) or isinstance(directory[0], unicode):
+            elif isinstance(directory[0], (str, unicode)):
                 super(ImageSet,self).__init__(map(Image, directory))
 
-        elif directory.lower() == 'samples' or directory.lower() == 'sample':
+        elif directory.lower() in ['samples', 'sample']:
             pth = LAUNCH_PATH
             pth = os.path.realpath(pth)
             directory = os.path.join(pth, 'sampleimages')
@@ -332,8 +332,7 @@ class ImageSet(list):
         """ Application extention. Part that secifies amount of loops.
         if loops is 0, if goes on infinitely.
         """
-        bb = "\x21\xFF\x0B"  # application extension
-        bb += "NETSCAPE2.0"
+        bb = "\x21\xFF\x0B" + "NETSCAPE2.0"
         bb += "\x03\x01"
         if loops == 0:
             loops = 2**16-1
@@ -344,8 +343,7 @@ class ImageSet(list):
     def _get_graphics_control_ext(self, duration=0.1):
         """ Graphics Control Extension. A sort of header at the start of
         each image. Specifies transparancy and duration. """
-        bb = '\x21\xF9\x04'
-        bb += '\x08'  # no transparency
+        bb = '\x21\xF9\x04' + '\x08'
         bb += int_to_bin( int(duration*100) ) # in 100th of seconds
         bb += '\x00'  # no transparent color
         bb += '\x00'  # end
@@ -365,11 +363,7 @@ class ImageSet(list):
         converted = []
 
         for img in self:
-            if not isinstance(img,pil.Image):
-                pil_img = img.getPIL()
-            else:
-                pil_img = img
-
+            pil_img = img if isinstance(img,pil.Image) else img.getPIL()
             converted.append((pil_img.convert('P',dither=dither), img._get_header_anim()))
 
         try:
@@ -388,23 +382,17 @@ class ImageSet(list):
                     fp.write(palette)
                     fp.write(appext)
 
-                    # write image
-                    fp.write(graphext)
-                    fp.write(imdes)
-                    for d in data:
-                        fp.write(d)
-
                 else:
                     # gather info (compress difference)
                     data = getdata(img)
                     imdes, data = data[0], data[1:]
                     graphext = self._get_graphics_control_ext(duration)
 
-                    # write image
-                    fp.write(graphext)
-                    fp.write(imdes)
-                    for d in data:
-                        fp.write(d)
+                # write image
+                fp.write(graphext)
+                fp.write(imdes)
+                for d in data:
+                    fp.write(d)
 
                 previous = img.copy()
                 frames = frames + 1
@@ -515,11 +503,8 @@ class ImageSet(list):
         Reads images from an animated GIF file. Returns the number of images loaded.
         """
 
-        if not PIL_ENABLED:
+        if not PIL_ENABLED or PIL_ENABLED and not os.path.isfile(filename):
             return
-        elif not os.path.isfile(filename):
-            return
-
         pil_img = pil.open(filename)
         pil_img.seek(0)
 
@@ -583,9 +568,9 @@ class ImageSet(list):
 
         if extension:
             #regexes to ignore case
-            regexList = [ '[' + letter + letter.upper() + ']' for letter in extension]
+            regexList = [f'[{letter}{letter.upper()}]' for letter in extension]
             regex = ''.join(regexList)
-            regex = "*." + regex
+            regex = f"*.{regex}"
             formats = [os.path.join(directory, regex)]
 
         else:
@@ -595,9 +580,7 @@ class ImageSet(list):
         file_set = [glob.glob(p) for p in formats]
         full_set = []
         for f in file_set:
-            for i in f:
-                full_set.append(i)
-
+            full_set.extend(iter(f))
         file_set = full_set
         if(sort_by is not None):
             if( sort_by.lower() == "time"):
@@ -607,14 +590,14 @@ class ImageSet(list):
             if( sort_by.lower() == "size"):
                 file_set = sorted(file_set,key=os.path.getsize)
 
-        self.filelist = dict()
+        self.filelist = {}
 
         for i in file_set:
             tmp = None
             try:
                 tmp = Image(i)
-                if( tmp is not None and tmp.width > 0 and tmp.height > 0):
-                    if sys.platform.lower() == 'win32' or sys.platform.lower() == 'win64':
+                if ( tmp is not None and tmp.width > 0 and tmp.height > 0):
+                    if sys.platform.lower() in ['win32', 'win64']:
                         self.filelist[tmp.filename.split('\\')[-1]] = tmp
                     else:
                         self.filelist[tmp.filename.split('/')[-1]] = tmp
@@ -671,9 +654,7 @@ class ImageSet(list):
         >>> np.max(sz[:,0]) # returns the largest width in the set.
 
         """
-        retVal = []
-        for i in self:
-            retVal.append((i.width,i.height))
+        retVal = [(i.width,i.height) for i in self]
         return np.array(retVal)
 
     def average(self, mode="first", size=(None,None)):
@@ -733,10 +714,7 @@ class ImageSet(list):
         #determine if we really need to resize the images
         t1 = np.sum(vals[:,0]-fw)
         t2 = np.sum(vals[:,1]-fh)
-        if( t1 != 0 or t2 != 0 ):
-            resized = self.standardize(fw,fh)
-        else:
-            resized = self
+        resized = self.standardize(fw,fh) if ( t1 != 0 or t2 != 0 ) else self
         # Now do the average calculation
         accumulator = cv.CreateImage((fw,fh), cv.IPL_DEPTH_8U,3)
         cv.Zero(accumulator)
@@ -744,8 +722,7 @@ class ImageSet(list):
         beta = float((len(resized)-1.0)/len(resized))
         for i in resized:
             cv.AddWeighted(i.getBitmap(),alpha,accumulator,beta,0,accumulator)
-        retVal =  Image(accumulator)
-        return retVal
+        return Image(accumulator)
 
 
     def __getitem__(self,key):
@@ -870,10 +847,7 @@ class Image:
     _uncroppedY = 0
 
     def __repr__(self):
-        if len(self.filename) == 0:
-            fn = "None"
-        else:
-            fn = self.filename
+        fn = "None" if len(self.filename) == 0 else self.filename
         return "<SimpleCV.Image Object size:(%d, %d), filename: (%s), at memory location: (%s)>" % (self.width, self.height, fn, hex(id(self)))
 
 
@@ -945,7 +919,7 @@ class Image:
 
             im = StringIO(img_file.read())
             source = pil.open(im).convert("RGB")
-            
+
         #Check if loaded from base64 URI
         if isinstance(source, basestring) and (source.lower().startswith("data:image/png;base64,")):
             img = source[22:].decode("base64")
@@ -956,10 +930,10 @@ class Image:
         if isinstance(source, basestring):
             tmpname = source.lower()
 
-            if tmpname == "simplecv" or tmpname == "logo":
+            if tmpname in ["simplecv", "logo"]:
                 imgpth = os.path.join(LAUNCH_PATH, 'sampleimages','simplecv.png')
                 source = imgpth
-            elif tmpname == "simplecv_inverted" or tmpname == "inverted" or tmpname == "logo_inverted":
+            elif tmpname in ["simplecv_inverted", "inverted", "logo_inverted"]:
                 imgpth = os.path.join(LAUNCH_PATH, 'sampleimages','simplecv_inverted.png')
                 source = imgpth
             elif tmpname == "lenna":
@@ -972,7 +946,7 @@ class Image:
                 choice = random.choice(['LyleJune1973.png','lenna.png'])
                 imgpth = os.path.join(LAUNCH_PATH, 'sampleimages',choice)
                 source = imgpth
-                
+
             elif sample:
                 imgpth = os.path.join(LAUNCH_PATH, 'sampleimages', source)
                 source = imgpth
@@ -995,22 +969,19 @@ class Image:
                 warnings.warn("Unable to process the provided cvmat") 
 
 
-        elif (type(source) == np.ndarray):  #handle a numpy array conversion
+        elif type(source) == np.ndarray:  #handle a numpy array conversion
             if (type(source[0, 0]) == np.ndarray): #we have a 3 channel array
                 #convert to an iplimage bitmap
                 source = source.astype(np.uint8)
                 self._numpy = source
-                if not cv2image:
-                    invertedsource = source[:, :, ::-1].transpose([1, 0, 2])
-                else:
-                    # If the numpy array is from cv2, then it must not be transposed.
-                    invertedsource = source
+                invertedsource = (
+                    source if cv2image else source[:, :, ::-1].transpose([1, 0, 2])
+                )
 
                 #invertedsource = source[:, :, ::-1].transpose([1, 0, 2]) # do not un-comment. breaks cv2 image support
                 self._bitmap = cv.CreateImageHeader((invertedsource.shape[1], invertedsource.shape[0]), cv.IPL_DEPTH_8U, 3)
                 cv.SetData(self._bitmap, invertedsource.tostring(),
                     invertedsource.dtype.itemsize * 3 * invertedsource.shape[1])
-                self._colorSpace = ColorSpace.BGR #this is an educated guess
             else:
                 #we have a single channel array, convert to an RGB iplimage
 
@@ -1023,9 +994,7 @@ class Image:
                 cv.SetData(channel, source.tostring(),
                     source.dtype.itemsize * source.shape[1])
                 cv.Merge(channel, channel, channel, None, self._bitmap)
-                self._colorSpace = ColorSpace.BGR
-
-
+            self._colorSpace = ColorSpace.BGR #this is an educated guess
         elif (type(source) == cv.iplimage):
             if (source.nChannels == 1):
                 self._bitmap = cv.CreateImage(cv.GetSize(source), source.depth, 3)
@@ -1039,7 +1008,7 @@ class Image:
             if source == '':
                 raise IOError("No filename provided to Image constructor")
 
-        
+
             elif webp or source.split('.')[-1] == 'webp':
                 try:
                     if source.__class__.__name__ == 'StringIO':
@@ -1164,14 +1133,12 @@ class Image:
 
         fileName, fileExtension = os.path.splitext(self.filename)
         fileExtension = string.lower(fileExtension)
-        if( fileExtension != '.jpeg' and fileExtension != '.jpg' and
-            fileExtension != 'tiff' and fileExtension != '.tif'):
+        if fileExtension not in ['.jpeg', '.jpg', 'tiff', '.tif']:
             #logger.warning("ImageClass.getEXIFData: This image format does not support EXIF")
             return {}
 
         raw = open(self.filename,'rb')
-        data = process_file(raw)
-        return data
+        return process_file(raw)
 
     def live(self):
         """
@@ -1435,8 +1402,7 @@ class Image:
         """
 
         retVal = self.getEmpty()
-        if( self._colorSpace == ColorSpace.BGR or
-                self._colorSpace == ColorSpace.UNKNOWN ):
+        if self._colorSpace in [ColorSpace.BGR, ColorSpace.UNKNOWN]:
             cv.CvtColor(self.getBitmap(), retVal, cv.CV_BGR2RGB)
         elif( self._colorSpace == ColorSpace.HSV ):
             cv.CvtColor(self.getBitmap(), retVal, cv.CV_HSV2RGB)
@@ -1477,8 +1443,7 @@ class Image:
 
         """
         retVal = self.getEmpty()
-        if( self._colorSpace == ColorSpace.RGB or
-                self._colorSpace == ColorSpace.UNKNOWN ):
+        if self._colorSpace in [ColorSpace.RGB, ColorSpace.UNKNOWN]:
             cv.CvtColor(self.getBitmap(), retVal, cv.CV_RGB2BGR)
         elif( self._colorSpace == ColorSpace.HSV ):
             cv.CvtColor(self.getBitmap(), retVal, cv.CV_HSV2BGR)
@@ -1520,8 +1485,7 @@ class Image:
         """
 
         retVal = self.getEmpty()
-        if( self._colorSpace == ColorSpace.BGR or
-                self._colorSpace == ColorSpace.UNKNOWN ):
+        if self._colorSpace in [ColorSpace.BGR, ColorSpace.UNKNOWN]:
             cv.CvtColor(self.getBitmap(), retVal, cv.CV_BGR2HLS)
         elif( self._colorSpace == ColorSpace.RGB):
             cv.CvtColor(self.getBitmap(), retVal, cv.CV_RGB2HLS)
@@ -1565,8 +1529,7 @@ class Image:
 
         """
         retVal = self.getEmpty()
-        if( self._colorSpace == ColorSpace.BGR or
-                self._colorSpace == ColorSpace.UNKNOWN ):
+        if self._colorSpace in [ColorSpace.BGR, ColorSpace.UNKNOWN]:
             cv.CvtColor(self.getBitmap(), retVal, cv.CV_BGR2HSV)
         elif( self._colorSpace == ColorSpace.RGB):
             cv.CvtColor(self.getBitmap(), retVal, cv.CV_RGB2HSV)
@@ -1611,8 +1574,7 @@ class Image:
         """
 
         retVal = self.getEmpty()
-        if( self._colorSpace == ColorSpace.BGR or
-                self._colorSpace == ColorSpace.UNKNOWN ):
+        if self._colorSpace in [ColorSpace.BGR, ColorSpace.UNKNOWN]:
             cv.CvtColor(self.getBitmap(), retVal, cv.CV_BGR2XYZ)
         elif( self._colorSpace == ColorSpace.RGB):
             cv.CvtColor(self.getBitmap(), retVal, cv.CV_RGB2XYZ)
@@ -1658,8 +1620,7 @@ class Image:
         """
 
         retVal = self.getEmpty(1)
-        if( self._colorSpace == ColorSpace.BGR or
-                self._colorSpace == ColorSpace.UNKNOWN ):
+        if self._colorSpace in [ColorSpace.BGR, ColorSpace.UNKNOWN]:
             cv.CvtColor(self.getBitmap(), retVal, cv.CV_BGR2GRAY)
         elif( self._colorSpace == ColorSpace.RGB):
             cv.CvtColor(self.getBitmap(), retVal, cv.CV_RGB2GRAY)
@@ -1706,8 +1667,7 @@ class Image:
         """
 
         retVal = self.getEmpty()
-        if( self._colorSpace == ColorSpace.BGR or
-                self._colorSpace == ColorSpace.UNKNOWN ):
+        if self._colorSpace in [ColorSpace.BGR, ColorSpace.UNKNOWN]:
             cv.CvtColor(self.getBitmap(), retVal, cv.CV_BGR2YCrCb)
         elif( self._colorSpace == ColorSpace.RGB ):
             cv.CvtColor(self.getBitmap(), retVal, cv.CV_RGB2YCrCb)
@@ -1829,11 +1789,9 @@ class Image:
         :py:meth:`getGrayscaleMatrix`
 
         """
-        if (self._matrix):
-            return self._matrix
-        else:
+        if not self._matrix:
             self._matrix = cv.GetMat(self.getBitmap()) #convert the bitmap to a matrix
-            return self._matrix
+        return self._matrix
 
 
     def getFPMatrix(self):
@@ -2044,8 +2002,7 @@ class Image:
 
         self._graybitmap = self.getEmpty(1)
         temp = self.getEmpty(3)
-        if( self._colorSpace == ColorSpace.BGR or
-                self._colorSpace == ColorSpace.UNKNOWN ):
+        if self._colorSpace in [ColorSpace.BGR, ColorSpace.UNKNOWN]:
             cv.CvtColor(self.getBitmap(), self._graybitmap, cv.CV_BGR2GRAY)
         elif( self._colorSpace == ColorSpace.RGB):
             cv.CvtColor(self.getBitmap(), self._graybitmap, cv.CV_RGB2GRAY)
@@ -2094,11 +2051,9 @@ class Image:
         :py:meth:`getMatrix`
 
         """
-        if (self._grayMatrix):
-            return self._grayMatrix
-        else:
+        if not self._grayMatrix:
             self._grayMatrix = cv.GetMat(self._getGrayscaleBitmap()) #convert the bitmap to a matrix
-            return self._grayMatrix
+        return self._grayMatrix
 
 
     def _getEqualizedGrayscaleBitmap(self):
@@ -2144,14 +2099,12 @@ class Image:
 
 
         """
-        if (self._pgsurface):
-            return self._pgsurface
-        else:
+        if not self._pgsurface:
             if self.isGray():
                 self._pgsurface = pg.image.fromstring(self.getBitmap().tostring(), self.size(), "RGB")
             else:
                 self._pgsurface = pg.image.fromstring(self.toRGB().getBitmap().tostring(), self.size(), "RGB")
-            return self._pgsurface
+        return self._pgsurface
 
     def toString(self):
         """
@@ -2657,19 +2610,18 @@ class Image:
         >>> img4 = img.resize(w=200,h=100)
 
         """
-        retVal = None
-        if( w is None and h is None ):
+        if ( w is None and h is None ):
             logger.warning("Image.resize has no parameters. No operation is performed")
             return None
         elif( w is not None and h is None):
             sfactor = float(w)/float(self.width)
             h = int( sfactor*float(self.height) )
-        elif( w is None and h is not None):
+        elif w is None:
             sfactor = float(h)/float(self.height)
             w = int( sfactor*float(self.width) )
-        if( w > MAX_DIMENSION or h > MAX_DIMENSION ):
+        if ( w > MAX_DIMENSION or h > MAX_DIMENSION ):
             logger.warning("Image.resize Holy Heck! You tried to make an image really big or impossibly small. I can't scale that")
-            return retVal
+            return None
         scaled_bitmap = cv.CreateImage((w, h), 8, 3)
         cv.Resize(self.getBitmap(), scaled_bitmap)
         return Image(scaled_bitmap, colorSpace=self._colorSpace)
@@ -2736,17 +2688,16 @@ class Image:
 
         """
         # see comment on argument documentation (spelling error)
-        aperture = aperature if aperature else aperture
+        aperture = aperature or aperture
 
-        if is_tuple(aperture):
-            win_x, win_y = aperture
-            if win_x <= 0 or win_y <= 0 or win_x % 2 == 0 or win_y % 2 == 0:
-                logger.warning("The aperture (x,y) must be odd number and greater than 0.")
-                return None
-        else:
-            raise ValueError("Please provide a tuple to aperture, got: %s" % type(aperture))
+        if not is_tuple(aperture):
+            raise ValueError(f"Please provide a tuple to aperture, got: {type(aperture)}")
 
 
+        win_x, win_y = aperture
+        if win_x <= 0 or win_y <= 0 or win_x % 2 == 0 or win_y % 2 == 0:
+            logger.warning("The aperture (x,y) must be odd number and greater than 0.")
+            return None
         #gauss and blur can work in-place, others need a buffer frame
         #use a string to ID rather than the openCV constant
         if algorithm_name == "blur":
@@ -2806,11 +2757,8 @@ class Image:
         try:
             import cv2
             new_version = True
-        except :
+        except:
             new_version = False
-            pass
-
-
         if is_tuple(window):
             win_x, win_y = window
             if ( win_x>=0 and win_y>=0 and win_x%2==1 and win_y%2==1 ) :
@@ -2873,10 +2821,8 @@ class Image:
         try:
             import cv2
             new_version = True
-        except :
+        except:
             new_version = False
-            pass
-
         if is_tuple(diameter):
             win_x, win_y = diameter
             if ( win_x>=0 and win_y>=0 and win_x%2==1 and win_y%2==1 ) :
@@ -2886,10 +2832,7 @@ class Image:
                 logger.warning("The aperture (win_x,win_y) must be odd number and greater than 0.")
                 return None
 
-        elif( is_number(diameter) ):
-            pass
-
-        else :
+        elif not (is_number(diameter)):
             win_x = 3 #set the default aperture window size (3x3)
             diameter = (win_x,win_x)
 
@@ -2931,10 +2874,8 @@ class Image:
         try:
             import cv2
             new_version = True
-        except :
+        except:
             new_version = False
-            pass
-
         if is_tuple(window):
             win_x, win_y = window
             if ( win_x<=0 or win_y<=0 ) :
@@ -2989,18 +2930,13 @@ class Image:
             ver = cv2.__version__
             new_version = False
             #For OpenCV versions till 2.4.0,  cv2.__versions__ are of the form "$Rev: 4557 $"
-            if not ver.startswith('$Rev:'):
-                if int(ver.replace('.','0'))>=20300 :
-                    new_version = True
-        except :
+            if not ver.startswith('$Rev:') and int(ver.replace('.', '0')) >= 20300:
+                new_version = True
+        except:
             new_version = False
-            pass
-
         if is_tuple(window):
             win_x, win_y = window
-            if ( win_x>=0 and win_y>=0 and win_x%2==1 and win_y%2==1 ) :
-                pass
-            else :
+            if win_x < 0 or win_y < 0 or win_x % 2 != 1 or win_y % 2 != 1:
                 logger.warning("The aperture (win_x,win_y) must be odd number and greater than 0.")
                 return None
 
@@ -3411,11 +3347,7 @@ class Image:
         corner_coordinates = cv.GoodFeaturesToTrack(self._getGrayscaleBitmap(), eig_image, temp_image, maxnum, minquality, mindistance, None)
 
 
-        corner_features = []
-        for (x, y) in corner_coordinates:
-            corner_features.append(Corner(self, x, y))
-
-
+        corner_features = [Corner(self, x, y) for (x, y) in corner_coordinates]
         return FeatureSet(corner_features)
 
 
@@ -3568,11 +3500,7 @@ class Image:
         >>> mask.show()
 
         """
-        if( self._colorSpace != ColorSpace.YCrCb ):
-            YCrCb = self.toYCrCb()
-        else:
-            YCrCb = self
-
+        YCrCb = self.toYCrCb() if ( self._colorSpace != ColorSpace.YCrCb ) else self
         Y =  np.ones((256,1),dtype=uint8)*0
         Y[5:] = 255
         Cr =  np.ones((256,1),dtype=uint8)*0
@@ -3674,9 +3602,7 @@ class Image:
             cascade = HaarCascade(cascade)
             if not cascade.getCascade(): 
                 return None
-        elif isinstance(cascade,HaarCascade):
-            pass
-        else:
+        elif not isinstance(cascade, HaarCascade):
             logger.warning('Could not initialize HaarCascade. Enter Valid cascade value.')
 
         # added all of the arguments from the opencv docs arglist
@@ -3797,10 +3723,7 @@ class Image:
 
 
         """
-        if self.width and self.height:
-            return cv.GetSize(self.getBitmap())
-        else:
-            return (0, 0)
+        return cv.GetSize(self.getBitmap()) if self.width and self.height else (0, 0)
 
     def isEmpty(self):
         """
@@ -3852,9 +3775,7 @@ class Image:
         hratio = self.height / rows
 
         for i in range(rows):
-            row = []
-            for j in range(cols):
-                row.append(self.crop(j * wratio, i * hratio, wratio, hratio))
+            row = [self.crop(j * wratio, i * hratio, wratio, hratio) for j in range(cols)]
             crops.append(row)
 
         return crops
@@ -4191,10 +4112,7 @@ class Image:
         vsh_matrix = self.toHSV().getNumpy().reshape(-1,3) #again, gets transposed to vsh
         hue_channel = np.cast['int'](vsh_matrix[:,2])
 
-        if color_hue < 90:
-            hue_loop = 180
-        else:
-            hue_loop = -180
+        hue_loop = 180 if color_hue < 90 else -180
         #set whether we need to move back or forward on the hue circle
 
         distances = np.minimum( np.abs(hue_channel - color_hue), np.abs(hue_channel - (color_hue + hue_loop)))

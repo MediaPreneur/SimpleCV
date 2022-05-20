@@ -54,18 +54,20 @@ class MorphologyFeatureExtractor(FeatureExtractorBase):
             self.mBlobMaker = BlobMaker()
 
         fs = self.mBlobMaker.extractFromBinary(bwImg,img)
-        if( fs is not None and len(fs) > 0 ):
+        if ( fs is not None and len(fs) > 0 ):
             fs = fs.sortArea()
-            retVal = []
-            retVal.append(fs[0].mArea/fs[0].mPerimeter)
-            retVal.append(fs[0].mAspectRatio)
-            retVal.append(fs[0].mHu[0])
-            retVal.append(fs[0].mHu[1])
-            retVal.append(fs[0].mHu[2])
-            retVal.append(fs[0].mHu[3])
-            retVal.append(fs[0].mHu[4])
-            retVal.append(fs[0].mHu[5])
-            retVal.append(fs[0].mHu[6])
+            retVal = [
+                fs[0].mArea / fs[0].mPerimeter,
+                fs[0].mAspectRatio,
+                fs[0].mHu[0],
+                fs[0].mHu[1],
+                fs[0].mHu[2],
+                fs[0].mHu[3],
+                fs[0].mHu[4],
+                fs[0].mHu[5],
+                fs[0].mHu[6],
+            ]
+
         return retVal
 
 
@@ -74,17 +76,17 @@ class MorphologyFeatureExtractor(FeatureExtractorBase):
         This method gives the names of each field in the feature vector in the
         order in which they are returned. For example, 'xpos' or 'width'
         """
-        retVal = []
-        retVal.append('area over perim')
-        retVal.append('AR')
-        retVal.append('Hu0')
-        retVal.append('Hu1')
-        retVal.append('Hu2')
-        retVal.append('Hu3')
-        retVal.append('Hu4')
-        retVal.append('Hu5')
-        retVal.append('Hu6')
-        return retVal
+        return [
+            'area over perim',
+            'AR',
+            'Hu0',
+            'Hu1',
+            'Hu2',
+            'Hu3',
+            'Hu4',
+            'Hu5',
+            'Hu6',
+        ]
 
 
     def getNumFields(self):

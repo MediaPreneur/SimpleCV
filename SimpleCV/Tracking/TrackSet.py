@@ -91,7 +91,7 @@ class TrackSet(FeatureSet):
             ... img = img1
         """
         ts = self
-        for i in range(num):
+        for _ in range(num):
             ts.pop(0)
 
     def areaRatio(self):
@@ -246,9 +246,7 @@ class TrackSet(FeatureSet):
             ... img = img1
         >>> imgset = ts.trackImages()
         """
-        if cv2_numpy:
-            return [f.cv2numpy for f in self]
-        return [f.image for f in self]
+        return [f.cv2numpy for f in self] if cv2_numpy else [f.image for f in self]
 
     def BBTrack(self):
         """

@@ -31,18 +31,17 @@ class CloudAnimator(object):
     update.exposed = True
 
     def upload(self):
-        if(self.giffile == None):
+        if self.giffile is None:
             tmpfile = tempfile.NamedTemporaryFile(suffix=".gif")
             tmpname = tmpfile.name.split("/")[-1] #grab the generated name
-            filepath = os.getcwd() + "/" + tmpname
+            filepath = f"{os.getcwd()}/{tmpname}"
             self.giffile = filepath
             self.gifname = tmpname
         tmpfile = tempfile.NamedTemporaryFile(suffix=".jpg") #Make a temporary gif file
         tmpname = tmpfile.name.split("/")[-1] #grab the generated name
-        filepath = os.getcwd() + "/" + tmpname #get the filepath
-        outfile = open(filepath, 'w') # create the filestream to write output to
-        outfile.write(cherrypy.serving.request.body.fp.read()) # read the raw data from the webserver and write to the temporary directory
-        outfile.close() # close the temporary file
+        filepath = f"{os.getcwd()}/{tmpname}"
+        with open(filepath, 'w') as outfile:
+            outfile.write(cherrypy.serving.request.body.fp.read()) # read the raw data from the webserver and write to the temporary directory
         self.process(filepath) #Use SimpleCV to process the image
         os.unlink(filepath)
         return self.gifname #return the image path via ajax request

@@ -39,29 +39,21 @@ class ConfusionMatrix():
     def getClassCorrectPercent(self, className):
         total = float(np.sum(self.confusionMatrix[:,self.nameMap[className]]))
         correct = float(self.confusionMatrix[self.nameMap[className],self.nameMap[className]])
-        if( correct == 0 or total == 0 ):
-            return 0
-        else:
-            return np.around(correct/total,2)
+        return 0 if ( correct == 0 or total == 0 ) else np.around(correct/total,2)
 
     def getClassIncorrectPercent(self, className):
         total = float(np.sum(self.confusionMatrix[:,self.nameMap[className]]))
         correct = float(self.confusionMatrix[self.nameMap[className],self.nameMap[className]])
         incorrect = total-correct
-        if( incorrect == 0 or total == 0 ):
-            return 0
-        else:
-            return np.around(incorrect/total,2)
+        return 0 if ( incorrect == 0 or total == 0 ) else np.around(incorrect/total,2)
 
     def getClassCorrect(self, className):
-        correct = self.confusionMatrix[self.nameMap[className],self.nameMap[className]]
-        return correct
+        return self.confusionMatrix[self.nameMap[className],self.nameMap[className]]
 
     def getClassIncorrect(self, className):
         total = np.sum(self.confusionMatrix[:,self.nameMap[className]])
         correct = self.confusionMatrix[self.nameMap[className],self.nameMap[className]]
-        incorrect = total-correct
-        return incorrect
+        return total-correct
 
 
     def getClassCount(self,className):
@@ -78,12 +70,12 @@ class ConfusionMatrix():
     def toString(self,pad_sz=7):
         retVal = 50*'#'
         retVal += "\n"
-        retVal += "Total Data Points " + str(self.totalCount) + "\n"
-        retVal += "Correct Data Points " + str(self.correctCount) + "\n"
-        retVal += "Incorrect Data Points " + str(self.incorrectCount) + "\n"
+        retVal += f"Total Data Points {str(self.totalCount)}" + "\n"
+        retVal += f"Correct Data Points {str(self.correctCount)}" + "\n"
+        retVal += f"Incorrect Data Points {str(self.incorrectCount)}" + "\n"
         retVal += "\n"
-        retVal += "Correct " + str(100.00*self.getCorrectPercent()) + "%\n"
-        retVal += "Incorrect " + str(100.00*self.getIncorrectPercent()) + "% \n"
+        retVal += f"Correct {str(100.00*self.getCorrectPercent())}" + "%\n"
+        retVal += f"Incorrect {str(100.00*self.getIncorrectPercent())}" + "% \n"
         retVal += 50*'#'
         retVal += '\n'
         wrdLen = 0
@@ -94,9 +86,9 @@ class ConfusionMatrix():
 
         top=(wrdLen+1)* " "
         for c in self.classList:
-            top = top + c[0:np.min([len(c),sz])].rjust(sz," ")+"|"
+            top = top + c[:np.min([len(c),sz])].rjust(sz, " ") + "|"
         retVal += top+"\n"
-        for i in range(0,len(self.classList)):
+        for i in range(len(self.classList)):
             line = self.classList[i].rjust(wrdLen," ")+"|"
             nums = self.confusionMatrix[i]
             for n in nums:

@@ -12,9 +12,9 @@ idxs = []
 colors = []
 offset = bins/2
 skip = 255/bins
-for x in range(0,bins):
-    for y in range(0,bins):
-        for z in range(0,bins):
+for x in range(bins):
+    for y in range(bins):
+        for z in range(bins):
             b = ((x*skip)+offset)/255.0
             g = ((y*skip)+offset)/255.0
             r = ((z*skip)+offset)/255.0

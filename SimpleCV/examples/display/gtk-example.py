@@ -76,9 +76,8 @@ class app(gtk.Window):
         #Start SimpleCV Code
         img = SimpleCV.Image('lenna').rotate90()
         edges = img.edges(self.edge_threshold)
-        numpy_img = edges.getNumpy()
         #End SimpleCV Code
-        return numpy_img
+        return edges.getNumpy()
 
 
     #This function is called anything the slider is moved

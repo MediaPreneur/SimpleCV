@@ -31,26 +31,23 @@ class MOGSegmentation(SegmentationBase):
     def __init__(self, history = 200, nMixtures = 5, backgroundRatio = 0.7, noiseSigma = 15, learningRate = 0.7):
         
         try:
-            import cv2            
+            import cv2
         except ImportError:
             raise ImportError("Cannot load OpenCV library which is required by SimpleCV")
-            return    
         if not hasattr(cv2, 'BackgroundSubtractorMOG'):
             raise ImportError("A newer version of OpenCV is needed")
-            return            
-        
         self.mError = False
-        self.mReady = False        
+        self.mReady = False
         self.mDiffImg = None
         self.mColorImg = None
         self.mBlobMaker = BlobMaker()
-        
+
         self.history = history
         self.nMixtures = nMixtures
         self.backgroundRatio = backgroundRatio
         self.noiseSigma = noiseSigma
         self.learningRate = learningRate
-        
+
         self.mBSMOG = cv2.BackgroundSubtractorMOG(history, nMixtures, backgroundRatio, noiseSigma)
         
         
@@ -116,10 +113,11 @@ class MOGSegmentation(SegmentationBase):
         """
         return the segmented blobs from the fg/bg image
         """
-        retVal = []
-        if( self.mColorImg is not None and self.mDiffImg is not None ):
-            retVal = self.mBlobMaker.extractFromBinary(self.mDiffImg ,self.mColorImg)
-        return retVal
+        return (
+            self.mBlobMaker.extractFromBinary(self.mDiffImg, self.mColorImg)
+            if (self.mColorImg is not None and self.mDiffImg is not None)
+            else []
+        )
 
 
     def __getstate__(self):

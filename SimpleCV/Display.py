@@ -136,7 +136,7 @@ class Display:
             os.environ["SDL_VIDEODRIVER"] = "dummy"
 
         if not PYGAME_INITIALIZED:
-            if not displaytype == 'notebook':
+            if displaytype != 'notebook':
                 pg.init()
             PYGAME_INITIALIZED = True
         self.xscale = 1.0
@@ -150,18 +150,18 @@ class Display:
         self.rightButtonDown = None
         self.rightButtonUp = None
         self.pressed = None
-        self.displaytype = displaytype 
+        self.displaytype = displaytype
         # NOTE: NO PYGAME CALLS SHOULD BE MADE IN INIT AS THEY KILLL
         # THE DISPLAY IN IPYTHON NOTEBOOKS       
         self.mouseRawX = 0 # Raw x and y are the actual position on the screen
         self.mouseRawY = 0 # versus the position on the image.
         self.resolution = resolution
-        if not displaytype == 'notebook':
-            self.screen = pg.display.set_mode(resolution, flags)        
+        if displaytype != 'notebook':
+            self.screen = pg.display.set_mode(resolution, flags)
         if os.path.isfile(os.path.join(LAUNCH_PATH, 'sampleimages','simplecv.png')): #checks if simplecv.png exists
             scvLogo = SimpleCV.Image("simplecv").scale(32,32)
             pg.display.set_icon(scvLogo.getPGSurface())
-        if flags != pg.FULLSCREEN and flags != pg.NOFRAME:
+        if flags not in [pg.FULLSCREEN, pg.NOFRAME]:
             pg.display.set_caption(title)
 
     def leftButtonUpPosition(self):
@@ -423,7 +423,7 @@ class Display:
         self.yscale = 1.0
         self.xoffset = 0
         self.yoffset = 0
-        if( img.size() == self.resolution): # we have to resize
+        if ( img.size() == self.resolution): # we have to resize
             s = img.getPGSurface()
             self.screen.blit(s, s.get_rect())
             pg.display.flip()
@@ -434,35 +434,25 @@ class Display:
             s = img.getPGSurface()
             self.screen.blit(s, s.get_rect())
             pg.display.flip()
-        elif(fit):
+        elif fit:
             #scale factors
             wscale = (float(img.width)/float(self.resolution[0]))
             hscale = (float(img.height)/float(self.resolution[1]))
             targetw = img.width
             targeth = img.height
-            if(wscale>1): #we're shrinking what is the percent reduction
-                wscale=1-(1.0/wscale)
-            else: # we need to grow the image by a percentage
-                wscale = 1.0-wscale
-
-            if(hscale>1):
-                hscale=1-(1.0/hscale)
-            else:
-                hscale=1.0-hscale
-
-            if( wscale == 0 ): #if we can get away with not scaling do that
+            wscale = 1-(1.0/wscale) if (wscale>1) else 1.0-wscale
+            hscale = 1-(1.0/hscale) if (hscale>1) else 1.0-hscale
+            if ( wscale == 0 ): #if we can get away with not scaling do that
                 targetx = 0
                 targety = (self.resolution[1]-img.height)/2
                 targetw = img.width
                 targeth = img.height
-                s = img.getPGSurface()
-            elif( hscale == 0 ): #if we can get away with not scaling do that
+            elif hscale == 0: #if we can get away with not scaling do that
                 targetx = (self.resolution[0]-img.width)/2
                 targety = 0
                 targetw = img.width
                 targeth = img.height
-                s = img.getPGSurface()
-            elif(wscale < hscale): # the width has less distortion
+            elif wscale < hscale: # the width has less distortion
                 sfactor = float(self.resolution[0])/float(img.width)
                 targetw = int(float(img.width)*sfactor)
                 targeth = int(float(img.height)*sfactor)
@@ -477,7 +467,6 @@ class Display:
                     targetx = 0
                     targety = (self.resolution[1]-targeth)/2
                 img = img.scale(targetw,targeth)
-                s = img.getPGSurface()
             else: #the height has more distortion
                 sfactor = float(self.resolution[1])/float(img.height)
                 targetw = int(float(img.width)*sfactor)
@@ -493,7 +482,7 @@ class Display:
                     targetx = (self.resolution[0]-targetw)/2
                     targety = 0
                 img = img.scale(targetw,targeth)
-                s = img.getPGSurface()
+            s = img.getPGSurface()
             #clear out the screen so everything is clean
             black = pg.Surface((self.resolution[0], self.resolution[1]))
             black.fill((0,0,0))
@@ -511,7 +500,7 @@ class Display:
             targety = 0
             cornerx = 0
             cornery = 0
-            if(img.width <= self.resolution[0] and img.height <= self.resolution[1] ): # center a too small image
+            if (img.width <= self.resolution[0] and img.height <= self.resolution[1] ): # center a too small image
                 #we're too small just center the thing
                 targetx = (self.resolution[0]/2)-(img.width/2)
                 targety = (self.resolution[1]/2)-(img.height/2)
@@ -541,7 +530,7 @@ class Display:
                 cornery = -1 * y
                 img = img.crop(x,y,targetw,targeth)
                 s = img.getPGSurface()
-            elif( img.width > self.resolution[0] and img.height <= self.resolution[1]): #width too big
+            elif img.width > self.resolution[0]: #width too big
                 #crop along the y dimension and center along the x dimension
                 targetw = self.resolution[0]
                 targeth = img.height

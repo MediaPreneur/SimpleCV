@@ -310,9 +310,7 @@ class Line(Feature):
         >>> c = l[0].isParallel(l[1])
 
         """
-        if self.slope == line.slope:
-            return True
-        return False
+        return self.slope == line.slope
 
     def isPerpendicular(self, line):
         """
@@ -332,15 +330,9 @@ class Line(Feature):
 
         """
         if self.slope == float("inf"):
-            if line.slope == 0:
-                return True
-            return False
-
+            return line.slope == 0
         if line.slope == float("inf"):
-            if self.slope == 0:
-                return True
-            return False
-
+            return self.slope == 0
         if self.slope*line.slope == -1:
             return True
         return False
@@ -364,18 +356,41 @@ class Line(Feature):
         """
         pixels = []
         if self.slope == float("inf"):
-            for y in range(self.end_points[0][1], self.end_points[1][1]+1):
-                pixels.append((self.end_points[0][0], y))
+            pixels.extend(
+                (self.end_points[0][0], y)
+                for y in range(self.end_points[0][1], self.end_points[1][1] + 1)
+            )
+
         else:
-            for x in range(self.end_points[0][0], self.end_points[1][0]+1):
-                pixels.append((x, int(self.end_points[1][1] + self.slope*(x-self.end_points[1][0]))))
-            for y in range(self.end_points[0][1], self.end_points[1][1]+1):
-                pixels.append((int(((y-self.end_points[1][1])/self.slope)+self.end_points[1][0]), y))
+            pixels.extend(
+                (
+                    x,
+                    int(
+                        self.end_points[1][1]
+                        + self.slope * (x - self.end_points[1][0])
+                    ),
+                )
+                for x in range(self.end_points[0][0], self.end_points[1][0] + 1)
+            )
+
+            pixels.extend(
+                (
+                    int(
+                        ((y - self.end_points[1][1]) / self.slope)
+                        + self.end_points[1][0]
+                    ),
+                    y,
+                )
+                for y in range(self.end_points[0][1], self.end_points[1][1] + 1)
+            )
+
         pixels = list(set(pixels))
-        matched_pixels=[]
-        for pixel in pixels:
-            if img[pixel[0], pixel[1]] == (255.0, 255.0, 255.0):
-                matched_pixels.append(pixel)
+        matched_pixels = [
+            pixel
+            for pixel in pixels
+            if img[pixel[0], pixel[1]] == (255.0, 255.0, 255.0)
+        ]
+
         matched_pixels.sort()
 
         return matched_pixels
@@ -437,16 +452,14 @@ class Line(Feature):
         x2, y2 = pt2
         w, h = self.image.width-1, self.image.height-1
         slope = self.slope
-               
+
         ep = []
         if slope == float('inf'):
             if 0 <= x1 <= w and 0 <= x2 <= w:
-                ep.append((x1, 0))
-                ep.append((x2, h))
+                ep.extend(((x1, 0), (x2, h)))
         elif slope == 0:
             if 0 <= y1 <= w and 0 <= y2 <= w:
-                ep.append((0, y1))
-                ep.append((w, y2))
+                ep.extend(((0, y1), (w, y2)))
         else:
             x = (slope*x1 - y1)/slope   # top edge y = 0
             if 0 <= x <= w:
@@ -455,17 +468,16 @@ class Line(Feature):
             x = (slope*x1 + h - y1)/slope   # bottom edge y = h
             if 0 <= x <= w:
                 ep.append((int(round(x)), h))
-            
+
             y = -slope*x1 + y1  # left edge x = 0
             if 0 <= y <= h:
                 ep.append( (0, (int(round(y)))) )
-            
+
             y = slope*(w - x1) + y1 # right edge x = w
             if 0 <= y <= h:
                 ep.append( (w, (int(round(y)))) )
 
-        ep = list(set(ep))  # remove duplicates of points if line cross image at corners
-        ep.sort()
+        ep = sorted(set(ep))
         if len(ep) == 2:
             # if points lies outside image then change them
             if not (0 < x1 < w and 0 < y1 < h):
@@ -478,7 +490,7 @@ class Line(Feature):
         else:
             logger.warning("Line does not cross the image")
             return None
-        
+
         return Line(self.image, (pt1, pt2))
         
     def getVector(self):
@@ -540,18 +552,16 @@ class Line(Feature):
         x2, y2 = pt2
         w, h = self.image.width-1, self.image.height-1
         slope = self.slope
-        
+
         if not 0 <= x1 <= w or not 0 <= x2 <= w or not 0 <= y1 <= w or not 0 <= y2 <= w:
             logger.warning("At first the line should be cropped")
             return None
-               
+
         ep = []
         if slope == float('inf'):
-            if 0 <= x1 <= w and 0 <= x2 <= w:
-                return Line(self.image, ((x1, 0), (x2, h)))
+            return Line(self.image, ((x1, 0), (x2, h)))
         elif slope == 0:
-            if 0 <= y1 <= w and 0 <= y2 <= w:
-                return Line(self.image, ((0, y1), (w, y2)))
+            return Line(self.image, ((0, y1), (w, y2)))
         else:
             x = (slope*x1 - y1)/slope   # top edge y = 0
             if 0 <= x <= w:
@@ -560,18 +570,16 @@ class Line(Feature):
             x = (slope*x1 + h - y1)/slope   # bottom edge y = h
             if 0 <= x <= w:
                 ep.append((int(round(x)), h))
-            
+
             y = -slope*x1 + y1  # left edge x = 0
             if 0 <= y <= h:
                 ep.append( (0, (int(round(y)))) )
-            
+
             y = slope*(w - x1) + y1 # right edge x = w
             if 0 <= y <= h:
                 ep.append( (w, (int(round(y)))) )
 
-        ep = list(set(ep))  # remove duplicates of points if line cross image at corners
-        ep.sort()
-        
+        ep = sorted(set(ep))
         return Line(self.image, ep)
 
 
@@ -931,13 +939,10 @@ class TemplateMatch(Feature):
         Returns true if this feature overlaps another template feature.
         """
         (maxx,minx,maxy,miny) = self.extents()
-        overlap = False
-        for p in other.points:
-            if( p[0] <= maxx and p[0] >= minx and p[1] <= maxy and p[1] >= miny ):
-                overlap = True
-                break
-
-        return overlap
+        return any(
+            (p[0] <= maxx and p[0] >= minx and p[1] <= maxy and p[1] >= miny)
+            for p in other.points
+        )
 
 
     def consume(self, other):
@@ -1204,19 +1209,18 @@ class Circle(Feature):
         The masked circle image.
 
         """
-        if( noMask ):
+        if noMask:
             return self.image.crop(self.x, self.y, self.width(), self.height(), centered = True)
-        else:
-            mask = self.image.getEmpty(1)
-            result = self.image.getEmpty()
-            cv.Zero(mask)
-            cv.Zero(result)
-            #if you want to shave a bit of time we go do the crop before the blit
-            cv.Circle(mask,(self.x,self.y),self.r,color=(255,255,255),thickness=-1)
-            cv.Copy(self.image.getBitmap(),result,mask)
-            retVal = Image(result)
-            retVal = retVal.crop(self.x, self.y, self.width(), self.height(), centered = True)
-            return retVal
+        mask = self.image.getEmpty(1)
+        result = self.image.getEmpty()
+        cv.Zero(mask)
+        cv.Zero(result)
+        #if you want to shave a bit of time we go do the crop before the blit
+        cv.Circle(mask,(self.x,self.y),self.r,color=(255,255,255),thickness=-1)
+        cv.Copy(self.image.getBitmap(),result,mask)
+        retVal = Image(result)
+        retVal = retVal.crop(self.x, self.y, self.width(), self.height(), centered = True)
+        return retVal
 
 ##################################################################################
 class KeyPoint(Feature):
@@ -1465,19 +1469,18 @@ class KeyPoint(Feature):
         The masked circle image.
 
         """
-        if( noMask ):
+        if noMask:
             return self.image.crop(self.x, self.y, self.width(), self.height(), centered = True)
-        else:
-            mask = self.image.getEmpty(1)
-            result = self.image.getEmpty()
-            cv.Zero(mask)
-            cv.Zero(result)
-            #if you want to shave a bit of time we go do the crop before the blit
-            cv.Circle(mask,(int(self.x),int(self.y)),int(self._r),color=(255,255,255),thickness=-1)
-            cv.Copy(self.image.getBitmap(),result,mask)
-            retVal = Image(result)
-            retVal = retVal.crop(self.x, self.y, self.width(), self.height(), centered = True)
-            return retVal
+        mask = self.image.getEmpty(1)
+        result = self.image.getEmpty()
+        cv.Zero(mask)
+        cv.Zero(result)
+        #if you want to shave a bit of time we go do the crop before the blit
+        cv.Circle(mask,(int(self.x),int(self.y)),int(self._r),color=(255,255,255),thickness=-1)
+        cv.Copy(self.image.getBitmap(),result,mask)
+        retVal = Image(result)
+        retVal = retVal.crop(self.x, self.y, self.width(), self.height(), centered = True)
+        return retVal
 
 ######################################################################
 class Motion(Feature):
@@ -1718,8 +1721,7 @@ class KeypointMatch(Feature):
         rectangle.
         """
         tl = self.topLeftCorner()
-        raw = self.image.crop(tl[0],tl[1],self.width(),self.height()) # crop the minbouding rect
-        return raw
+        return self.image.crop(tl[0],tl[1],self.width(),self.height())
 
 
     def meanColor(self):
@@ -1870,18 +1872,15 @@ class ROI(Feature):
             h = None
         else:
             self.image = image
-            
+
         if( image is None and isinstance(x,(Feature,FeatureSet))):
             if( isinstance(x,Feature) ):
                 self.image = x.image
             if( isinstance(x,FeatureSet) and len(x) > 0 ):
                 self.image = x[0].image
-                
-        if(isinstance(x,Feature)):
-            self.subFeatures = FeatureSet([x])
-        elif(isinstance(x,(list,tuple)) and len(x) > 0 and isinstance(x,Feature)):
-            self.subFeatures = FeatureSet(x)
 
+        if (isinstance(x,Feature)):
+            self.subFeatures = FeatureSet([x])
         result = self._standardize(x,y,w,h)
         if result is None:
             logger.warning("Could not create an ROI from your data.")
@@ -1920,27 +1919,29 @@ class ROI(Feature):
         if(h is None and isinstance(w,(tuple,list))):
             h = w[1]
             w = w[0]
-        if(percentage):
+        if percentage:
             if( h is None ):
                 h = w
             nw = self.w * w
             nh = self.h * h
-            nx = self.xtl + ((self.w-nw)/2.0)
-            ny = self.ytl + ((self.h-nh)/2.0)
-            self._rebase([nx,ny,nw,nh])
         else:
             nw = self.w+w
             nh = self.h+h
-            nx = self.xtl + ((self.w-nw)/2.0)
-            ny = self.ytl + ((self.h-nh)/2.0)
-            self._rebase([nx,ny,nw,nh])
+
+        nx = self.xtl + ((self.w-nw)/2.0)
+        ny = self.ytl + ((self.h-nh)/2.0)
+        self._rebase([nx,ny,nw,nh])
 
     def overlaps(self,otherROI):
-        for p in otherROI.points:
-            if( p[0] <= self.maxX() and p[0] >= self.minX() and
-                p[1] <= self.maxY() and p[1] >= self.minY() ):
-                return True
-        return False
+        return any(
+            (
+                p[0] <= self.maxX()
+                and p[0] >= self.minX()
+                and p[1] <= self.maxY()
+                and p[1] >= self.minY()
+            )
+            for p in otherROI.points
+        )
 
     def translate(self,x=0,y=0):
         """
@@ -2061,13 +2062,8 @@ class ROI(Feature):
         srcw = float(self.image.width)
         srch = float(self.image.height)
         x,y,w,h = self.toXYWH()
-        nx = 0
-        ny = 0
-        if( x != 0 ):
-            nx = x/srcw
-        if( y != 0 ):
-            ny = y/srch
-        
+        nx = x/srcw if ( x != 0 ) else 0
+        ny = y/srch if ( y != 0 ) else 0
         return [nx,ny,w/srcw,h/srch]
         
     def toUnitTLAndBR(self):
@@ -2095,15 +2091,10 @@ class ROI(Feature):
         srcw = float(self.image.width)
         srch = float(self.image.height)
         x,y,w,h = self.toXYWH()
-        nx = 0
-        ny = 0
         nw = w/srcw
         nh = h/srch
-        if( x != 0 ):
-            nx = x/srcw
-        if( y != 0 ):
-            ny = y/srch
-        
+        nx = x/srcw if ( x != 0 ) else 0
+        ny = y/srch if ( y != 0 ) else 0
         return [(nx,ny),(nx+nw,ny+nh)]
 
 
@@ -2481,10 +2472,8 @@ class ROI(Feature):
         Completely alter roi using whatever source coordinates you wish.
         
         """
-        if(isinstance(x,Feature)):
+        if (isinstance(x,Feature)):
             self.subFeatures.append(x)
-        elif(isinstance(x,(list,tuple)) and len[x] > 0 and isinstance(x,Feature)):
-            self.subFeatures += list(x)
         result = self._standardize(x,y,w,h)
         if result is None:
             logger.warning("Could not create an ROI from your data.")
@@ -2584,7 +2573,7 @@ class ROI(Feature):
             y = y.tolist()
 
         # make the common case fast
-        if( isinstance(x,(int,float)) and isinstance(y,(int,float)) and
+        if ( isinstance(x,(int,float)) and isinstance(y,(int,float)) and
             isinstance(w,(int,float)) and isinstance(h,(int,float)) ):
             if( self.image is not None ):
                 x = np.clip(x,0,self.image.width)
@@ -2595,7 +2584,6 @@ class ROI(Feature):
                 return [x,y,w,h]
         elif(isinstance(x,ROI)):
             x,y,w,h = x.toXYWH()
-        #If it's a feature extract what we need    
         elif(isinstance(x,FeatureSet) and len(x) > 0 ):
             #double check that everything in the list is a feature
             features = [feat for feat in x if isinstance(feat,Feature)]
@@ -2607,7 +2595,7 @@ class ROI(Feature):
             y = ymin
             w = xmax-xmin
             h = ymax-ymin
-            
+
         elif(isinstance(x, Feature)):
             theFeature = x
             x = theFeature.points[0][0]
@@ -2615,19 +2603,24 @@ class ROI(Feature):
             w = theFeature.width()
             h = theFeature.height()
 
-        # [x,y,w,h] (x,y,w,h)
-        elif(isinstance(x, (tuple,list)) and len(x) == 4 and isinstance(x[0],(int, long, float))
-             and y == None and w == None and h == None):
+        elif (
+            isinstance(x, (tuple, list))
+            and len(x) == 4
+            and isinstance(x[0], (int, long, float))
+            and y is None
+            and w is None
+            and h is None
+        ):
             x,y,w,h = x
-        # x of the form [(x,y),(x1,y1),(x2,y2),(x3,y3)]
-        # x of the form [[x,y],[x1,y1],[x2,y2],[x3,y3]]
-        # x of the form ([x,y],[x1,y1],[x2,y2],[x3,y3])
-        # x of the form ((x,y),(x1,y1),(x2,y2),(x3,y3))
-        elif( isinstance(x, (list,tuple)) and
-              isinstance(x[0],(list,tuple)) and
-              (len(x) == 4 and len(x[0]) == 2 ) and
-              y == None and w == None and h == None):
-            if (len(x[0])==2 and len(x[1])==2 and len(x[2])==2 and len(x[3])==2):
+        elif (
+            isinstance(x, (list, tuple))
+            and isinstance(x[0], (list, tuple))
+            and (len(x) == 4 and len(x[0]) == 2)
+            and y is None
+            and w is None
+            and h is None
+        ):
+            if len(x[1]) == 2 and len(x[2]) == 2 and len(x[3]) == 2:
                 xmax = np.max([x[0][0],x[1][0],x[2][0],x[3][0]])
                 ymax = np.max([x[0][1],x[1][1],x[2][1],x[3][1]])
                 xmin = np.min([x[0][0],x[1][0],x[2][0],x[3][0]])
@@ -2639,8 +2632,7 @@ class ROI(Feature):
             else:
                 logger.warning("x should be in the form  ((x,y),(x1,y1),(x2,y2),(x3,y3))")
                 return None
- 
-        # x,y of the form [x1,x2,x3,x4,x5....] and y similar
+
         elif(isinstance(x, (tuple,list)) and
              isinstance(y, (tuple,list)) and
              len(x) > 4 and len(y) > 4 ):
@@ -2657,9 +2649,14 @@ class ROI(Feature):
                 logger.warning("x should be in the form x = [1,2,3,4,5] y =[0,2,4,6,8]")
                 return None
 
-        # x of the form [(x,y),(x,y),(x,y),(x,y),(x,y),(x,y)]
-        elif(isinstance(x, (list,tuple)) and
-             len(x) > 4 and len(x[0]) == 2 and y == None and w == None and h == None):
+        elif (
+            isinstance(x, (list, tuple))
+            and len(x) > 4
+            and len(x[0]) == 2
+            and y is None
+            and w is None
+            and h is None
+        ):
             if(isinstance(x[0][0],(int, long, float))):
                 xs = [pt[0] for pt in x]
                 ys = [pt[1] for pt in x]
@@ -2675,8 +2672,15 @@ class ROI(Feature):
                 logger.warning("x should be in the form [(x,y),(x,y),(x,y),(x,y),(x,y),(x,y)]")
                 return None
 
-        # x of the form [(x,y),(x1,y1)]
-        elif(isinstance(x,(list,tuple)) and len(x) == 2 and isinstance(x[0],(list,tuple)) and isinstance(x[1],(list,tuple)) and y == None and w == None and h == None):
+        elif (
+            isinstance(x, (list, tuple))
+            and len(x) == 2
+            and isinstance(x[0], (list, tuple))
+            and isinstance(x[1], (list, tuple))
+            and y is None
+            and w is None
+            and h is None
+        ):
             if (len(x[0])==2 and len(x[1])==2):
                 xt = np.min([x[0][0],x[1][0]])
                 yt = np.min([x[0][0],x[1][0]])
@@ -2688,8 +2692,12 @@ class ROI(Feature):
                 logger.warning("x should be in the form [(x1,y1),(x2,y2)]")
                 return None
 
-        # x and y of the form (x,y),(x1,y2)
-        elif(isinstance(x, (tuple,list)) and isinstance(y,(tuple,list)) and w == None and h == None):
+        elif (
+            isinstance(x, (tuple, list))
+            and isinstance(y, (tuple, list))
+            and w is None
+            and h is None
+        ):
             if (len(x)==2 and len(y)==2):
                 xt = np.min([x[0],y[0]])
                 yt = np.min([x[1],y[1]])
@@ -2697,12 +2705,12 @@ class ROI(Feature):
                 h = np.abs(y[1]-x[1])
                 x = xt
                 y = yt
-                
+
             else:
                 logger.warning("if x and y are tuple it should be in the form (x1,y1) and (x2,y2)")
                 return None
 
-        if(y == None or w == None or h == None):
+        if y is None or w is None or h is None:
             logger.warning('Not a valid roi')
         elif( w <= 0 or h <= 0 ):
             logger.warning("ROI can't have a negative dimension")
@@ -2717,7 +2725,8 @@ class ROI(Feature):
         return [x,y,w,h]
             
     def crop(self):
-        retVal = None
-        if(self.image is not None):
-            retVal = self.image.crop(self.xtl,self.ytl,self.w,self.h)
-        return retVal
+        return (
+            self.image.crop(self.xtl, self.ytl, self.w, self.h)
+            if (self.image is not None)
+            else None
+        )

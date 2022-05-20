@@ -53,8 +53,7 @@ def getAppExt(loops=0):
     """ Application extention. Part that secifies amount of loops.
     if loops is 0, if goes on infinitely.
     """
-    bb = "\x21\xFF\x0B"  # application extension
-    bb += "NETSCAPE2.0"
+    bb = "\x21\xFF\x0B" + "NETSCAPE2.0"
     bb += "\x03\x01"
     if loops == 0:
         loops = 2**16-1
@@ -66,8 +65,7 @@ def getAppExt(loops=0):
 def getGraphicsControlExt(duration=0.1):
     """ Graphics Control Extension. A sort of header at the start of
     each image. Specifies transparancy and duration. """
-    bb = '\x21\xF9\x04'
-    bb += '\x08'  # no transparancy
+    bb = '\x21\xF9\x04' + '\x08'
     bb += intToBin( int(duration*100) ) # in 100th of seconds
     bb += '\x00'  # no transparant color
     bb += '\x00'  # end
@@ -90,7 +88,6 @@ def _writeGifToFile(fp, images, durations, loops):
             # gather data
             palette = getheader(im)[1]
             data = getdata(im)
-            imdes, data = data[0], data[1:]
             header = getheaderAnim(im)
             appext = getAppExt(loops)
             graphext = getGraphicsControlExt(durations[0])
@@ -100,24 +97,17 @@ def _writeGifToFile(fp, images, durations, loops):
             fp.write(palette)
             fp.write(appext)
 
-            # write image
-            fp.write(graphext)
-            fp.write(imdes)
-            for d in data:
-                fp.write(d)
-
         else:
             # gather info (compress difference)
             data = getdata(im)
-            imdes, data = data[0], data[1:]
             graphext = getGraphicsControlExt(durations[frames])
 
-            # write image
-            fp.write(graphext)
-            fp.write(imdes)
-            for d in data:
-                fp.write(d)
-
+        # write image
+        fp.write(graphext)
+        imdes, data = data[0], data[1:]
+        fp.write(imdes)
+        for d in data:
+            fp.write(d)
 #             # delta frame - does not seem to work
 #             delta = ImageChops.subtract_modulo(im, previous)
 #             bbox = delta.getbbox()

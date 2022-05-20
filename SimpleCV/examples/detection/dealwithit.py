@@ -15,10 +15,7 @@ def process_eyes(image, eyes):
         dx = -1*dx
         right_eye = eyes[-1]
 
-    if dx > image.width/15: #Reduces amount of wrong matches
-        return (dx, dy, right_eye)
-    else:
-        return (None, None, None)
+    return (dx, dy, right_eye) if dx > image.width/15 else (None, None, None)
 
 
 def draw_glasses(image, (dx, dy, right_eye), glasses):

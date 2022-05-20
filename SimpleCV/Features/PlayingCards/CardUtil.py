@@ -31,7 +31,4 @@ def GetFullDataSet(path="./data",label=True): # just load everything
             else:
                 d = GetSpecificCardData(s,r,path,label)
                 data += d
-    if( label ):
-        return data,labels
-    else:
-        return data
+    return (data, labels) if label else data

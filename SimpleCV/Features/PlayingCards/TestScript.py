@@ -9,8 +9,8 @@ def GetParallelSets(line_fs,parallel_thresh=25):
     result = []
     sz = len(line_fs)
     #construct the pairwise cross product ignoring dupes
-    for i in range(0,sz):
-        for j in range(0,sz):
+    for i in range(sz):
+        for j in range(sz):
             if( j<=i ):
                 result.append(np.Inf)
             else:
@@ -22,11 +22,7 @@ def GetParallelSets(line_fs,parallel_thresh=25):
     # find the lines that are less than our thresh
     l1,l2=np.where(result<parallel_thresh)
     idxs = zip(l1,l2)
-    retVal = []
-    # now construct the line pairs
-    for idx in idxs:
-        retVal.append((line_fs[idx[0]],line_fs[idx[1]]))
-    return retVal
+    return [(line_fs[idx[0]],line_fs[idx[1]]) for idx in idxs]
 
 
 pcf = PlayingCardFactory()

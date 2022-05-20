@@ -98,21 +98,16 @@ def camshiftTracker(img, bb, ts, **kwargs):
     cv2.normalize(hist, hist, 0, 255, cv2.NORM_MINMAX);
     hist_flat = hist.reshape(-1)
     imgs = [hsv]
-    if len(ts) > num_frames and num_frames > 1:
-        for feat in ts[-num_frames:]:
-            imgs.append(feat.image.toHSV().getNumpyCv2())
+    if len(ts) > num_frames > 1:
+        imgs.extend(feat.image.toHSV().getNumpyCv2() for feat in ts[-num_frames:])
     elif len(ts) < num_frames and num_frames > 1:
-        for feat in ts:
-            imgs.append(feat.image.toHSV().getNumpyCv2())
-
+        imgs.extend(feat.image.toHSV().getNumpyCv2() for feat in ts)
     prob = cv2.calcBackProject(imgs, [0], hist_flat, [0, 180], 1)
     prob &= mask
     term_crit = ( cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1 )
     new_ellipse, track_window = cv2.CamShift(prob, bb, term_crit)
     if track_window[2] == 0 or track_window[3] == 0:
         track_window = bb
-    track = CAMShiftTrack(img, track_window, new_ellipse)
-
-    return track
+    return CAMShiftTrack(img, track_window, new_ellipse)
 
 from SimpleCV.Tracking import CAMShiftTrack

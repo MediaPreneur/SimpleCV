@@ -105,7 +105,7 @@ class FrameSource:
         n_boards = 0    #no of boards
         board_w = int(dimensions[0])    # number of horizontal corners
         board_h = int(dimensions[1])    # number of vertical corners
-        n_boards = int(len(imageList))
+        n_boards = len(imageList)
         board_n = board_w * board_h             # no of total corners
         board_sz = (board_w, board_h)   #size of board
         if( n_boards < warn_thresh ):
@@ -124,7 +124,7 @@ class FrameSource:
         successes = 0
         imgIdx = 0
         #       capturing required number of views
-        while(successes < n_boards):
+        while (successes < n_boards):
             found = 0
             img = imageList[imgIdx]
             (found, corners) = cv.FindChessboardCorners(img.getGrayscaleMatrix(), board_sz,
@@ -149,11 +149,14 @@ class FrameSource:
                     cv.Set2D(object_points, k, 2, 0.0)
                     k = k + 1
                 cv.Set2D(point_counts, successes, 0, board_n)
-                successes = successes + 1
+                successes += 1
 
         # now assigning new matrices according to view_count
-        if( successes < warn_thresh ):
-            logger.warning("FrameSource.calibrate: You have %s good images for calibration we recommend at least %s" % (successes, warn_thresh))
+        if ( successes < warn_thresh ):
+            logger.warning(
+                f"FrameSource.calibrate: You have {successes} good images for calibration we recommend at least {warn_thresh}"
+            )
+
 
         object_points2 = cv.CreateMat(successes * board_n, 3, cv.CV_32FC1)
         image_points2 = cv.CreateMat(successes * board_n, 2, cv.CV_32FC1)
@@ -287,16 +290,16 @@ class FrameSource:
 
 
         """
-        if( type(self._calibMat) != cv.cvmat ):
+        if ( type(self._calibMat) != cv.cvmat ):
             logger.warning("FrameSource.saveCalibration: No calibration matrix present, can't save.")
         else:
-            intrFName = filename + "Intrinsic.xml"
+            intrFName = f"{filename}Intrinsic.xml"
             cv.Save(intrFName, self._calibMat)
 
-        if( type(self._distCoeff) != cv.cvmat ):
+        if ( type(self._distCoeff) != cv.cvmat ):
             logger.warning("FrameSource.saveCalibration: No calibration distortion present, can't save.")
         else:
-            distFName = filename + "Distortion.xml"
+            distFName = f"{filename}Distortion.xml"
             cv.Save(distFName, self._distCoeff)
 
         return None
@@ -323,16 +326,11 @@ class FrameSource:
         See :py:module:calibrate.py
 
         """
-        retVal = False
-        intrFName = filename + "Intrinsic.xml"
+        intrFName = f"{filename}Intrinsic.xml"
         self._calibMat = cv.Load(intrFName)
-        distFName = filename + "Distortion.xml"
+        distFName = f"{filename}Distortion.xml"
         self._distCoeff = cv.Load(distFName)
-        if( type(self._distCoeff) == cv.cvmat
-            and type(self._calibMat) == cv.cvmat):
-            retVal = True
-
-        return retVal
+        return type(self._distCoeff) == cv.cvmat and type(self._calibMat) == cv.cvmat
 
     def live(self):
         """
@@ -583,11 +581,7 @@ class Camera(FrameSource):
         """
         if self.pygame_camera:
             return False
-        props = {}
-        for p in self.prop_map:
-            props[p] = self.getProperty(p)
-
-        return props
+        return {p: self.getProperty(p) for p in self.prop_map}
 
     def getImage(self):
         """
@@ -823,10 +817,8 @@ class VirtualCamera(FrameSource):
             img = self.getImage()
             cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_FRAMES, number_frame)
             return img
-        elif (self.sourcetype == 'imageset'):
-            img = None
-            if( frame < len(self.source)):
-                img = self.source[frame]
+        elif self.sourcetype == 'imageset':
+            img = self.source[frame] if ( frame < len(self.source)) else None
             return img
         else:
             return None
@@ -889,8 +881,7 @@ class VirtualCamera(FrameSource):
 
         """
         if (self.sourcetype == 'video'):
-            number_frame = int(cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_FRAMES))
-            return number_frame
+            return int(cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_FRAMES))
         else:
             return self.counter
 
@@ -917,8 +908,7 @@ class VirtualCamera(FrameSource):
 
         """
         if (self.sourcetype == 'video'):
-            milliseconds = int(cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC))
-            return milliseconds
+            return int(cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC))
         else:
             raise ValueError('sources other than video do not have play time property')
 
@@ -1088,12 +1078,19 @@ class JpegStreamReader(threading.Thread):
             headers['Content-type'] = headers['content-type'] #force ucase first char
 
         if not headers.has_key("Content-type"):
-            logger.warning("Tried to load a JpegStream from " + self.url + ", but didn't find a content-type header!")
+            logger.warning(
+                f"Tried to load a JpegStream from {self.url}"
+                + ", but didn't find a content-type header!"
+            )
+
             return
 
         (multipart, boundary) = headers['Content-type'].split("boundary=")
         if not re.search("multipart", multipart, re.I):
-            logger.warning("Tried to load a JpegStream from " + self.url + ", but the content type header was " + multipart + " not multipart/replace!")
+            logger.warning(
+                f"Tried to load a JpegStream from {self.url}, but the content type header was {multipart} not multipart/replace!"
+            )
+
             return
 
         buff = ''
@@ -1167,7 +1164,7 @@ class JpegStreamCamera(FrameSource):
             logger.warning("You need the Python Image Library (PIL) to use the JpegStreamCamera")
             return
         if not url.startswith('http://'):
-            url = "http://" + url
+            url = f"http://{url}"
         self.url = url
         self.camthread = JpegStreamReader()
         self.camthread.url = self.url
@@ -1185,7 +1182,7 @@ class JpegStreamCamera(FrameSource):
             now = time.time()
             while not self.camthread._threadcapturetime:
                 if time.time() - now > 5:
-                    warnings.warn("Timeout fetching JpegStream at " + self.url)
+                    warnings.warn(f"Timeout fetching JpegStream at {self.url}")
                     return
                 time.sleep(0.1)
 
@@ -1353,9 +1350,7 @@ class Scanner(FrameSource):
         >>> print scan.getProperty('mode')
         color
         """
-        if hasattr(self.device, prop):
-            return getattr(self.device, prop)
-        return None
+        return getattr(self.device, prop) if hasattr(self.device, prop) else None
 
 
     def setROI(self, topleft = (0,0), bottomright = (-1,-1)):
@@ -1660,16 +1655,16 @@ class StereoImage:
         (kpts1, desc1) = self.ImageLeft._getRawKeypoints(thresh)
         (kpts2, desc2) = self.ImageRight._getRawKeypoints(thresh)
 
-        if desc1 == None or desc2 == None:
+        if desc1 is None or desc2 is None:
             logger.warning("We didn't get any descriptors. Image might be too uniform or blurry.")
             return None
 
         num_pts1 = desc1.shape[0]
         num_pts2 = desc2.shape[0]
 
-        magic_ratio = 1.00
-        if num_pts1 > num_pts2:
-            magic_ratio = float(num_pts1) / float(num_pts2)
+        magic_ratio = (
+            float(num_pts1) / float(num_pts2) if num_pts1 > num_pts2 else 1.00
+        )
 
         (idx, dist) = Image()._getFLANNMatches(desc1, desc2)
         p = dist.squeeze()
@@ -1730,16 +1725,16 @@ class StereoImage:
         (kpts1, desc1) = self.ImageLeft._getRawKeypoints(thresh)
         (kpts2, desc2) = self.ImageRight._getRawKeypoints(thresh)
 
-        if desc1 == None or desc2 == None:
+        if desc1 is None or desc2 is None:
             logger.warning("We didn't get any descriptors. Image might be too uniform or blurry.")
             return None
 
         num_pts1 = desc1.shape[0]
         num_pts2 = desc2.shape[0]
 
-        magic_ratio = 1.00
-        if num_pts1 > num_pts2:
-            magic_ratio = float(num_pts1) / float(num_pts2)
+        magic_ratio = (
+            float(num_pts1) / float(num_pts2) if num_pts1 > num_pts2 else 1.00
+        )
 
         (idx, dist) = Image()._getFLANNMatches(desc1, desc2)
         p = dist.squeeze()
@@ -1797,9 +1792,8 @@ class StereoImage:
         gray_right = self.ImageRight.getGrayscaleMatrix()
         (r, c) = self.size
         scale = int(self.ImageLeft.depth)
-        if nDisparity % 16 !=0 :
-            if nDisparity < 16 :
-                nDisparity = 16
+        if nDisparity % 16 !=0:
+            nDisparity = max(nDisparity, 16)
             nDisparity = (nDisparity/16)*16
         try :
             if method == 'BM':
@@ -1938,10 +1932,7 @@ class StereoImage:
 
         H = np.matrix(H)
         point = np.matrix((point[1], point[0],1.00))
-        if whichImage == 1.00:
-            corres_pt = H * point.T
-        else:
-            corres_pt = np.linalg.inv(H) * point.T
+        corres_pt = H * point.T if whichImage == 1.00 else np.linalg.inv(H) * point.T
         corres_pt = corres_pt / corres_pt[2]
         return (float(corres_pt[1]), float(corres_pt[0]))
 
@@ -2586,8 +2577,6 @@ class StereoCamera :
             else:
                 warnings.warn("Unable to open right camera")
                 return None
-            imgLeft = Image(imgLeft, cv2image=True)
-            imgRight = Image(imgRight, cv2image=True)
         else:
             camLeft = cv.CaptureFromCAM(leftIndex)
             camRight = cv.CaptureFromCAM(rightIndex)
@@ -2601,9 +2590,8 @@ class StereoCamera :
                 warnings.warn("Unable to open right camera")
                 return None
 
-            imgLeft = Image(imgLeft, cv2image=True)
-            imgRight = Image(imgRight, cv2image=True)
-
+        imgLeft = Image(imgLeft, cv2image=True)
+        imgRight = Image(imgRight, cv2image=True)
         del camLeft
         del camRight
 
@@ -2627,33 +2615,31 @@ class AVTCameraThread(threading.Thread):
         self._stop = threading.Event()
         self.camera = camera
         self.lock = threading.Lock()
-        self.name = 'Thread-Camera-ID-' + str(self.camera.uniqueid)
+        self.name = f'Thread-Camera-ID-{str(self.camera.uniqueid)}'
 
       
     def run(self):
         counter = 0
         timestamp = time.time()
-        
-        while self.run:
-          self.lock.acquire()
-          self.camera.runCommand("AcquisitionStart")
-          frame = self.camera._getFrame(1000)
-          
-          if frame:            
-            img = Image(pil.fromstring(self.camera.imgformat, 
-              (self.camera.width, self.camera.height), 
-              frame.ImageBuffer[:int(frame.ImageBufferSize)]))
-            self.camera._buffer.appendleft(img)
-            
-          self.camera.runCommand("AcquisitionStop")
-          self.lock.release()
-          counter += 1
-          time.sleep(0.01)
 
-          if time.time() - timestamp >= 1:
-            self.camera.framerate = counter
-            counter = 0
-            timestamp = time.time()
+        while self.run:
+            self.lock.acquire()
+            self.camera.runCommand("AcquisitionStart")
+            if frame := self.camera._getFrame(1000):
+                img = Image(pil.fromstring(self.camera.imgformat, 
+                  (self.camera.width, self.camera.height), 
+                  frame.ImageBuffer[:int(frame.ImageBufferSize)]))
+                self.camera._buffer.appendleft(img)
+
+            self.camera.runCommand("AcquisitionStop")
+            self.lock.release()
+            counter += 1
+            time.sleep(0.01)
+
+            if time.time() - timestamp >= 1:
+              self.camera.framerate = counter
+              counter = 0
+              timestamp = time.time()
             
 
 
@@ -2907,7 +2893,7 @@ class AVTCamera(FrameSource):
         ]
 
         def __repr__(self):
-            return "<SimpleCV.Camera.AVTCameraInfo - UniqueId: %s>" % (self.UniqueId)
+            return f"<SimpleCV.Camera.AVTCameraInfo - UniqueId: {self.UniqueId}>"
 
     class AVTFrame(ct.Structure):
         _fields_ = [
@@ -3142,11 +3128,7 @@ class AVTCamera(FrameSource):
         >>>print props['ExposureValue']
 
         """
-        props = {}
-        for p in self._properties.keys():
-            props[p] = self.getProperty(p)
-
-        return props
+        return {p: self.getProperty(p) for p in self._properties.keys()}
 
     def setProperty(self, name, value, skip_buffer_size_check=False):
         """
@@ -3243,11 +3225,13 @@ class AVTCamera(FrameSource):
         self.setProperty('FrameStartTriggerMode','FreeRun')
 
     def unbuffer(self):
-        img = Image(pil.fromstring(self.imgformat,
-                                   (self.width, self.height),
-                                   self.frame.ImageBuffer[:int(self.frame.ImageBufferSize)]))
-
-        return img
+        return Image(
+            pil.fromstring(
+                self.imgformat,
+                (self.width, self.height),
+                self.frame.ImageBuffer[: int(self.frame.ImageBufferSize)],
+            )
+        )
 
     def _refreshFrameStats(self):
         self.width = self.getProperty("Width")
@@ -3349,30 +3333,29 @@ class GigECamera(Camera):
         return Image(rgb)
 
     def getPropertyList(self):
-      l = [
-           'available_pixel_formats',
-           'available_pixel_formats_as_display_names',
-           'available_pixel_formats_as_strings',
-           'binning',
-           'device_id',
-           'exposure_time',
-           'exposure_time_bounds',
-           'frame_rate',
-           'frame_rate_bounds',
-           'gain',
-           'gain_bounds',
-           'height_bounds',
-           'model_name',
-           'payload',
-           'pixel_format',
-           'pixel_format_as_string',
-           'region',
-           'sensor_size',
-           'trigger_source',
-           'vendor_name',
-           'width_bounds'
-          ]
-      return l
+        return [
+            'available_pixel_formats',
+            'available_pixel_formats_as_display_names',
+            'available_pixel_formats_as_strings',
+            'binning',
+            'device_id',
+            'exposure_time',
+            'exposure_time_bounds',
+            'frame_rate',
+            'frame_rate_bounds',
+            'gain',
+            'gain_bounds',
+            'height_bounds',
+            'model_name',
+            'payload',
+            'pixel_format',
+            'pixel_format_as_string',
+            'region',
+            'sensor_size',
+            'trigger_source',
+            'vendor_name',
+            'width_bounds',
+        ]
       
     
     def getProperty(self, name = None):
@@ -3453,7 +3436,7 @@ class VimbaCameraThread(threading.Thread):
         self._stop = threading.Event()
         self.camera = camera
         self.lock = threading.Lock()
-        self.name = 'Thread-Camera-ID-' + str(self.camera.uniqueid)
+        self.name = f'Thread-Camera-ID-{str(self.camera.uniqueid)}'
 
       
     def run(self):
@@ -3549,9 +3532,8 @@ class VimbaCamera(FrameSource):
 
         self._vimba = None
         self._setupVimba()
-        
+
         camlist = self.listAllCameras()
-        self._camTable = {}
         self._frame = None
         self._buffer = None # Buffer to store images
         self._buffersize = 10 # Number of images to keep in the rolling image buffer for threads
@@ -3562,25 +3544,23 @@ class VimbaCamera(FrameSource):
         self._properties = {}
         self._camera = None
 
-        i = 0
-        for cam in camlist:
-            self._camTable[i] = {'id': cam.cameraIdString}
-            i += 1
+        self._camTable = {
+            i: {'id': cam.cameraIdString} for i, cam in enumerate(camlist)
+        }
 
         if not len(camlist):
             raise Exception("Couldn't find any cameras with the Vimba driver.  Use VimbaViewer to confirm you have one connected.")
 
-        if camera_id < 9000: #camera was passed as an index reference
-            if camera_id == -1:  #accept -1 for "first camera"
-                camera_id = 0
-
-            if (camera_id > len(camlist)):
-                raise Exception("Couldn't find camera at index %d." % camera_id)
-
-            cam_guid = camlist[camera_id].cameraIdString
-        else:
+        if camera_id >= 9000:
             raise Exception("Index %d is too large" % camera_id)
 
+        if camera_id == -1:  #accept -1 for "first camera"
+            camera_id = 0
+
+        if (camera_id > len(camlist)):
+            raise Exception("Couldn't find camera at index %d." % camera_id)
+
+        cam_guid = camlist[camera_id].cameraIdString
         self._camera = self._vimba.getCamera(cam_guid)
         self._camera.openCamera()
 
@@ -3617,7 +3597,7 @@ class VimbaCamera(FrameSource):
           self._buffer = deque(maxlen=self._buffersize)
           self._thread.start()
           self.threaded = True
-          
+
         self._refreshFrameStats()
 
     def restart(self):
@@ -3640,10 +3620,7 @@ class VimbaCamera(FrameSource):
         VimbaCamera objects are defined in the pymba module
         """
         cameraIds = self._vimba.getCameraIds()
-        ar = []
-        for cameraId in cameraIds:
-            ar.append(self._vimba.getCamera(cameraId))
-        return ar
+        return [self._vimba.getCamera(cameraId) for cameraId in cameraIds]
 
     def runCommand(self,command):
         """

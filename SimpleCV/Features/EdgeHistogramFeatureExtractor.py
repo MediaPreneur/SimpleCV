@@ -41,19 +41,9 @@ class EdgeHistogramFeatureExtractor(FeatureExtractorBase):
         """
         Return the names of all of the length and angle fields.
         """
-        retVal = []
-        for i in range(self.mNBins):
-            name = "Length"+str(i)
-            retVal.append(name)
-        for i in range(self.mNBins):
-            name = "Angle"+str(i)
-            retVal.append(name)
-
+        retVal = [f"Length{str(i)}" for i in range(self.mNBins)]
+        retVal.extend(f"Angle{str(i)}" for i in range(self.mNBins))
         return retVal
-        """
-        This method gives the names of each field in the feature vector in the
-        order in which they are returned. For example, 'xpos' or 'width'
-        """
 
     def getNumFields(self):
         """

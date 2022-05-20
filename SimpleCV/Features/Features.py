@@ -1141,9 +1141,7 @@ class FeatureSet(list):
 
     @property
     def image(self):
-        if not len(self):
-            return None
-        return self[0].image
+        return self[0].image if len(self) else None
 
     @image.setter
     def image(self, i):
@@ -1909,11 +1907,11 @@ class Feature(object):
         >>>    print "above the biggest blob"
 
         """
-        if( isinstance(object,Feature) ):
+        if ( isinstance(object,Feature) ):
             return( self.maxY() < object.minY() )
-        elif( isinstance(object,tuple) or isinstance(object,np.ndarray) ):
+        elif isinstance(object, (tuple, np.ndarray)):
             return( self.maxY() < object[1]  )
-        elif( isinstance(object,float) or isinstance(object,int) ):
+        elif isinstance(object, (float, int)):
             return( self.maxY() < object )
         else:
             logger.warning("SimpleCV did not recognize the input type to feature.above(). This method only takes another feature, an (x,y) tuple, or a ndarray type.")
@@ -1948,11 +1946,11 @@ class Feature(object):
         >>>    print "above the biggest blob"
 
         """
-        if( isinstance(object,Feature) ):
+        if ( isinstance(object,Feature) ):
             return( self.minY() > object.maxY() )
-        elif( isinstance(object,tuple) or isinstance(object,np.ndarray) ):
+        elif isinstance(object, (tuple, np.ndarray)):
             return( self.minY() > object[1]  )
-        elif( isinstance(object,float) or isinstance(object,int) ):
+        elif isinstance(object, (float, int)):
             return( self.minY() > object )
         else:
             logger.warning("SimpleCV did not recognize the input type to feature.below(). This method only takes another feature, an (x,y) tuple, or a ndarray type.")
@@ -1988,11 +1986,11 @@ class Feature(object):
         >>>    print "right of the the blob"
 
         """
-        if( isinstance(object,Feature) ):
+        if ( isinstance(object,Feature) ):
             return( self.minX() > object.maxX() )
-        elif( isinstance(object,tuple) or isinstance(object,np.ndarray) ):
+        elif isinstance(object, (tuple, np.ndarray)):
             return( self.minX() > object[0]  )
-        elif( isinstance(object,float) or isinstance(object,int) ):
+        elif isinstance(object, (float, int)):
             return( self.minX() > object )
         else:
             logger.warning("SimpleCV did not recognize the input type to feature.right(). This method only takes another feature, an (x,y) tuple, or a ndarray type.")
@@ -2028,11 +2026,11 @@ class Feature(object):
 
 
         """
-        if( isinstance(object,Feature) ):
+        if ( isinstance(object,Feature) ):
             return( self.maxX() < object.minX() )
-        elif( isinstance(object,tuple) or isinstance(object,np.ndarray) ):
+        elif isinstance(object, (tuple, np.ndarray)):
             return( self.maxX() < object[0]  )
-        elif( isinstance(object,float) or isinstance(object,int) ):
+        elif isinstance(object, (float, int)):
             return( self.maxX() < object )
         else:
             logger.warning("SimpleCV did not recognize the input type to feature.left(). This method only takes another feature, an (x,y) tuple, or a ndarray type.")
@@ -2074,14 +2072,13 @@ class Feature(object):
         retVal = False
 
         bounds = self.points
-        if( isinstance(other,Feature) ):# A feature
+        if ( isinstance(other,Feature) ):# A feature
             retVal = True
             for p in other.points: # this isn't completely correct - only tests if points lie in poly, not edges.
                 p2 = (int(p[0]),int(p[1]))
                 retVal = self._pointInsidePolygon(p2,bounds)
                 if( not retVal ):
                     break
-        # a single point
         elif( (isinstance(other,tuple) and len(other)==2) or ( isinstance(other,np.ndarray) and other.shape[0]==2) ):
             retVal = self._pointInsidePolygon(other,bounds)
 
@@ -2097,7 +2094,11 @@ class Feature(object):
                     retVal = False
                     break
 
-        elif( isinstance(other,tuple) and len(other)==4 and ( isinstance(other[0],float) or isinstance(other[0],int))):
+        elif (
+            isinstance(other, tuple)
+            and len(other) == 4
+            and isinstance(other[0], (float, int))
+        ):
             retVal = ( self.maxX() <= other[0]+other[2] and
                        self.minX() >= other[0] and
                        self.maxY() <= other[1]+other[3] and
@@ -2155,7 +2156,7 @@ class Feature(object):
         retVal = False
         bounds = self.points
 
-        if( isinstance(other,Feature) ):# A feature
+        if ( isinstance(other,Feature) ):# A feature
             retVal = True
             for p in other.points: # this isn't completely correct - only tests if points lie in poly, not edges.
                 retVal = self._pointInsidePolygon(p,bounds)
@@ -2177,7 +2178,11 @@ class Feature(object):
                     retVal = True
                     break
 
-        elif( isinstance(other,tuple) and len(other)==4 and ( isinstance(other[0],float) or isinstance(other[0],int))):
+        elif (
+            isinstance(other, tuple)
+            and len(other) == 4
+            and isinstance(other[0], (float, int))
+        ):
             retVal = ( self.contains( (other[0],other[1] ) ) or # see if we contain any corner
                        self.contains( (other[0]+other[2],other[1] ) ) or
                        self.contains( (other[0],other[1]+other[3] ) ) or
@@ -2293,7 +2298,7 @@ class Feature(object):
         retVal = True
         bounds = self.points
 
-        if( isinstance(other,Feature) ): # another feature do the containment test
+        if ( isinstance(other,Feature) ): # another feature do the containment test
             retVal = other.contains(self)
         elif( isinstance(other,tuple) and len(other)==3 ): # a circle
             #assume we are in x,y, r format
@@ -2305,8 +2310,11 @@ class Feature(object):
                 if( test > rr ):
                     retVal = False
                     break
-        elif( isinstance(other,tuple) and len(other)==4 and  # a bounding box
-            ( isinstance(other[0],float) or isinstance(other[0],int))): # we assume a tuple of four is (x,y,w,h)
+        elif (
+            isinstance(other, tuple)
+            and len(other) == 4
+            and isinstance(other[0], (float, int))
+        ): # we assume a tuple of four is (x,y,w,h)
             retVal = ( self.maxX() <= other[0]+other[2] and
                        self.minX() >= other[0] and
                        self.maxY() <= other[1]+other[3] and
@@ -2376,12 +2384,6 @@ class Feature(object):
             logger.warning("feature._pointInsidePolygon - this is not a valid polygon")
             return False
 
-        #if( not isinstance(point,tuple) ):
-            #if( len(point) == 2 ):
-            #    point = tuple(point)
-            #else:
-            #    logger.warning("feature._pointInsidePolygon - this is not a valid point")
-            #    return False
         #if( cv2.__version__ == '$Rev:4557'):
         counter = 0
         retVal = True
@@ -2394,13 +2396,15 @@ class Feature(object):
         p1 = poly[0]
         for i in range(1,N+1):
             p2 = poly[i%N]
-            if( point[1] > np.min((p1[1],p2[1])) ):
-                if( point[1] <= np.max((p1[1],p2[1])) ):
-                    if( point[0] <= np.max((p1[0],p2[0])) ):
-                        if( p1[1] != p2[1] ):
-                            test = float((point[1]-p1[1])*(p2[0]-p1[0]))/float(((p2[1]-p1[1])+p1[0]))
-                            if( p1[0] == p2[0] or point[0] <= test ):
-                                counter = counter + 1
+            if (
+                (point[1] > np.min((p1[1], p2[1])))
+                and (point[1] <= np.max((p1[1], p2[1])))
+                and (point[0] <= np.max((p1[0], p2[0])))
+                and (p1[1] != p2[1])
+            ):
+                test = float((point[1]-p1[1])*(p2[0]-p1[0]))/float(((p2[1]-p1[1])+p1[0]))
+                if( p1[0] == p2[0] or point[0] <= test ):
+                    counter = counter + 1
             p1 = p2
 
         if( counter % 2 == 0 ):
@@ -2439,11 +2443,7 @@ class Feature(object):
         # contour of the blob in image
         contour = self.contour()
 
-        points = []
-        # list of contour points converted to suitable format to pass into cv2.minEnclosingCircle()
-        for pair in contour:
-            points.append([[pair[0], pair[1]]])
-
+        points = [[[pair[0], pair[1]]] for pair in contour]
         points = np.array(points)
 
         (cen, rad) = cv2.minEnclosingCircle(points);

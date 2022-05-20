@@ -118,11 +118,8 @@ except ImportError:
 VIMBA_ENABLED = True
 try:
     import pymba
-except ImportError:
-    #TODO Log an error the pymba is not installed
-    VIMBA_ENABLED = False
 except Exception:
-    #TODO Log an error that AVT Vimba DLL is not installed properly
+    #TODO Log an error the pymba is not installed
     VIMBA_ENABLED = False
 
 class InitOptionsHandler(object):
@@ -185,10 +182,7 @@ def find(f, seq):
 
     Returns: Boolean
     """
-    for item in seq:
-        if (f == item):
-            return True
-    return False
+    return any((f == item) for item in seq)
 
 def test():
     """
@@ -238,12 +232,12 @@ def npArray2cvMat(inputMat, dataType=cv.CV_32FC1):
 
     Returns: cvMatrix
     """
-    if( type(inputMat) == np.ndarray ):
+    if ( type(inputMat) == np.ndarray ):
         sz = len(inputMat.shape)
         temp_mat = None
-        if( dataType == cv.CV_32FC1 or dataType == cv.CV_32FC2 or dataType == cv.CV_32FC3 or dataType == cv.CV_32FC4 ):
+        if dataType in [cv.CV_32FC1, cv.CV_32FC2, cv.CV_32FC3, cv.CV_32FC4]:
             temp_mat = np.array(inputMat, dtype='float32')
-        elif( dataType == cv.CV_8UC1 or  dataType == cv.CV_8UC2 or dataType == cv.CV_8UC3 or dataType == cv.CV_8UC3):
+        elif dataType in [cv.CV_8UC1, cv.CV_8UC2, cv.CV_8UC3]:
             temp_mat = np.array(inputMat,dtype='uint8')
         else:
             logger.warning("MatrixConversionUtil: the input matrix type is not supported")

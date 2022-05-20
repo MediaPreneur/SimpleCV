@@ -42,17 +42,15 @@ def rank_int(card):
 def card_int(card):
     s = 1 << suit_int(card)
     r = rank_int(card)
-    c = (s << 4) | r
-    return c
+    return (s << 4) | r
     
 # test functions
 def is_straight(cards):
     previous = rank_int(cards[0]) - 1
     for card in cards:
         r = rank_int(card)
-        if r != previous + 1:
-            if not (r == 12 and previous == 3):
-                return False
+        if r != previous + 1 and (r != 12 or previous != 3):
+            return False
         previous = r
     return True
     
@@ -92,25 +90,16 @@ def rank_count(cards):
     
 def is_three(cards, counts=None):
     counts = counts or rank_count(cards)
-    for rank, count in counts.iteritems():
-        if count == 3:
-            return True
-    return False
+    return any(count == 3 for rank, count in counts.iteritems())
     
 def is_two_pair(cards, counts=None):
-    pairs = 0
     counts = counts or rank_count(cards)
-    for rank, count in counts.iteritems():
-        if count == 2:
-            pairs += 1
+    pairs = sum(count == 2 for rank, count in counts.iteritems())
     return pairs == 2
     
 def is_pair(cards, counts=None):
     counts = counts or rank_count(cards)
-    for rank, count in counts.iteritems():
-        if count == 2:
-            return True
-    return False
+    return any(count == 2 for rank, count in counts.iteritems())
     
 def get_ranks(counts):
     values = [(count, rank) for rank, count in counts.iteritems()]

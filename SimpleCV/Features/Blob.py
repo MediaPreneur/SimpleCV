@@ -96,13 +96,7 @@ class Blob(Feature):
 
     def __getstate__(self):
         skip = self.pickle_skip_properties
-        newdict = {}
-        for k,v in self.__dict__.items():
-            if k in skip:
-                continue
-            else:
-                newdict[k] = v
-        return newdict
+        return {k: v for k,v in self.__dict__.items() if k not in skip}
 
 
     def __setstate__(self, mydict):
@@ -202,7 +196,7 @@ class Blob(Feature):
         avg = cv.Avg(self.image.getBitmap(),self.mMask._getGrayscaleBitmap())
         cv.ResetImageROI(self.image.getBitmap())
 
-        return tuple(reversed(avg[0:3]))
+        return tuple(reversed(avg[:3]))
 
     def area(self):
         """
@@ -783,9 +777,10 @@ class Blob(Feature):
         >>>     print "it is hip to be square."
 
         """
-        if self.isRectangle(tolerance) and abs(1 - self.aspectRatio()) < ratiotolerance:
-            return True
-        return False
+        return bool(
+            self.isRectangle(tolerance)
+            and abs(1 - self.aspectRatio()) < ratiotolerance
+        )
 
 
     def isRectangle(self, tolerance = 0.05):
@@ -811,9 +806,7 @@ class Blob(Feature):
         >>>     print "it is hip to be square."
 
         """
-        if self.rectangleDistance() < tolerance:
-            return True
-        return False
+        return self.rectangleDistance() < tolerance
 
     def rectangleDistance(self):
         """
@@ -846,9 +839,7 @@ class Blob(Feature):
         True if the feature is within tolerance for being a circle, false otherwise.
 
         """
-        if self.circleDistance() < tolerance:
-            return True
-        return False
+        return self.circleDistance() < tolerance
 
     def circleDistance(self):
         """
@@ -942,9 +933,7 @@ class Blob(Feature):
         #construct the hole contoursb
         holes = []
         if self.mHoleContour is not None:
-            for h in self.mHoleContour: # -- these are lists
-                holes.append([(h2[0]-l,h2[1]-t) for h2 in h])
-
+            holes.extend([(h2[0]-l,h2[1]-t) for h2 in h] for h in self.mHoleContour)
             cv.FillPoly(retVal,holes,(0,0,0),8)
         return Image(retVal)
 
@@ -1311,7 +1300,7 @@ class Blob(Feature):
         derp = self.getSCDescriptors()
         descriptors,completeContour = self.getSCDescriptors()
         fs = FeatureSet()
-        for i in range(0,len(completeContour)):
+        for i in range(len(completeContour)):
             fs.append(ShapeContextDescriptor(self.image,completeContour[i],descriptors[i],self))
 
         return fs
@@ -1341,7 +1330,7 @@ class Blob(Feature):
         data = self.shapeContextMatch(otherBlob)
         mapvals = data[0]
         color = Color()
-        for i in range(0,len(self._completeContour)):
+        for i in range(len(self._completeContour)):
             lhs = self._completeContour[i]
             idx = mapvals[i];
             rhs = otherBlob._completeContour[idx]
@@ -1370,13 +1359,7 @@ class Blob(Feature):
         sd = np.std(distances)
         x = np.mean(distances)
         min = np.min(distances)
-        # not sure trimmed mean is perfect
-        # realistically we should have some bimodal dist
-        # and we want to throw away stuff with awful matches
-        # so long as the number of points is not a huge
-        # chunk of our points.
-        tmean = sps.tmean(distances,(min,x+sd))
-        return tmean
+        return sps.tmean(distances,(min,x+sd))
 
     def getConvexityDefects(self, returnPoints=False):
         """
@@ -1417,8 +1400,7 @@ class Blob(Feature):
         def cvFallback():
             chull = cv.ConvexHull2(self.mContour, cv.CreateMemStorage(), return_points=False)
             defects = cv.ConvexityDefects(self.mContour, chull, cv.CreateMemStorage())
-            points = [(defect[0], defect[1], defect[2]) for defect in defects]
-            return points
+            return [(defect[0], defect[1], defect[2]) for defect in defects]
 
         try:
             import cv2

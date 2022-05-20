@@ -226,16 +226,15 @@ class BOFFeatureExtractor(object):
         """
         Save the bag of features codebook and data set to a local file.
         """
-        myFile = open(datafname,'w')
-        myFile.write("BOF Codebook Data\n")
-        myFile.write(str(self.mNumCodes)+"\n")
-        myFile.write(str(self.mPatchSize[0])+"\n")
-        myFile.write(str(self.mPatchSize[1])+"\n")
-        myFile.write(str(self.mPadding)+"\n")
-        myFile.write(str(self.mLayout[0])+"\n")
-        myFile.write(str(self.mLayout[1])+"\n")
-        myFile.write(imgfname+"\n")
-        myFile.close()
+        with open(datafname,'w') as myFile:
+            myFile.write("BOF Codebook Data\n")
+            myFile.write(str(self.mNumCodes)+"\n")
+            myFile.write(str(self.mPatchSize[0])+"\n")
+            myFile.write(str(self.mPatchSize[1])+"\n")
+            myFile.write(str(self.mPadding)+"\n")
+            myFile.write(str(self.mLayout[0])+"\n")
+            myFile.write(str(self.mLayout[1])+"\n")
+            myFile.write(imgfname+"\n")
         if(self.mCodebookImg is None):
             self._codebook2Img(self.mCodebook,self.mPatchSize,self.mNumCodes,self.mLayout,self.mPadding)
         self.mCodebookImg.save(imgfname)
@@ -302,9 +301,10 @@ class BOFFeatureExtractor(object):
         """
         retVal = []
         for widx in range(self.mLayout[0]):
-            for hidx in range(self.mLayout[1]):
-                temp = "CB_R"+str(widx)+"_C"+str(hidx)
-                retVal.append(temp)
+            retVal.extend(
+                f"CB_R{str(widx)}_C{str(hidx)}" for hidx in range(self.mLayout[1])
+            )
+
         return retVal
 
 

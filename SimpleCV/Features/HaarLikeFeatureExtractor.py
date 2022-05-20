@@ -42,11 +42,10 @@ class HaarLikeFeatureExtractor(FeatureExtractorBase):
         # -1 loads all
         # otherwise loads min(nfeats,features in file)
         self.mFeatureSet = []
-        f = open(fname,'r')
-        #line = f.readline()
-        #count = int(line)
-        temp = f.read()
-        f.close()
+        with open(fname,'r') as f:
+            #line = f.readline()
+            #count = int(line)
+            temp = f.read()
         data = temp.split()
         count = int(data.pop(0))
         self.mFeatureset = []
@@ -56,8 +55,8 @@ class HaarLikeFeatureExtractor(FeatureExtractorBase):
             name = data.pop(0)
             nRegions = int(data.pop(0))
             region = []
-            for i in range(nRegions):
-                region.append(tuple(map(float,data[0:5])))
+            for _ in range(nRegions):
+                region.append(tuple(map(float, data[:5])))
                 data = data[5:]
 
             feat = HaarLikeFeature(name,region)
@@ -68,11 +67,10 @@ class HaarLikeFeatureExtractor(FeatureExtractorBase):
         """
         Save wavelets to file
         """
-        f = open(fname,'w')
-        f.write(str(len(self.mFeatureSet))+'\n\n')
-        for i in range(len(self.mFeatureSet)):
-            self.mFeatureSet[i].writeToFile(f)
-        f.close()
+        with open(fname,'w') as f:
+            f.write(str(len(self.mFeatureSet))+'\n\n')
+            for i in range(len(self.mFeatureSet)):
+                self.mFeatureSet[i].writeToFile(f)
         return None
 
     def extract(self, img):
@@ -81,14 +79,19 @@ class HaarLikeFeatureExtractor(FeatureExtractorBase):
         the Haar cascades, and returns the result as a feature vector.
         """
         regular = img.integralImage()
-        retVal = []
+        retVal = [
+            self.mFeatureSet[i].apply(regular)
+            for i in range(len(self.mFeatureSet))
+        ]
 
-        for i in range(len(self.mFeatureSet)):
-            retVal.append(self.mFeatureSet[i].apply(regular))
-        if(self.mDo45):
+
+        if self.mDo45:
             slant = img.integralImage(tilted=True)
-            for i in range(len(self.mFeatureSet)):
-                retVal.append(self.mFeatureSet[i].apply(regular))
+            retVal.extend(
+                self.mFeatureSet[i].apply(regular)
+                for i in range(len(self.mFeatureSet))
+            )
+
         return retVal
 
     def getFieldNames(self):
@@ -96,12 +99,10 @@ class HaarLikeFeatureExtractor(FeatureExtractorBase):
         This method gives the names of each field in the feature vector in the
         order in which they are returned. For example, 'xpos' or 'width'
         """
-        retVal = []
-        for i in range( len(self.mFeatureSet)):
-            retVal.append(self.mFeatureSet[i].mName)
-        if( self.mDo45 ):
+        retVal = [self.mFeatureSet[i].mName for i in range( len(self.mFeatureSet))]
+        if self.mDo45:
             for i in range( len(self.mFeatureSet)):
-                name = "Angle_"+self.mFeatureSet[i].mName
+                name = f"Angle_{self.mFeatureSet[i].mName}"
                 retVal.append(name)
         return retVal
 
@@ -110,7 +111,5 @@ class HaarLikeFeatureExtractor(FeatureExtractorBase):
         """
         This method returns the total number of fields in the feature vector.
         """
-        mult = 1
-        if(self.mDo45):
-            mult = 2
+        mult = 2 if self.mDo45 else 1
         return mult*len(self.mFeatureset)

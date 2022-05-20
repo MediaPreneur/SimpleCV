@@ -16,7 +16,7 @@ while not display.isDone():
     img = cam.getImage()
     img = img.scale(160,120)
     dl = DrawingLayer((img.width,img.height))
-    mystring = "( " +str(display.mouseX)+" , "+str(display.mouseY)+" )"
+    mystring = f"( {str(display.mouseX)} , {str(display.mouseY)} )"
     #print((display.mouseX,display.mouseY))
     if SegmentMode:
         segmentation.addImage(img)
@@ -31,12 +31,12 @@ while not display.isDone():
             segmentation.reset()
             display.mouseLeft = False
     else:
-        if(display.mouseLeft and not mouse_down):
+        if (display.mouseLeft and not mouse_down):
             #print( (display.mouseX,display.mouseY))
             x0 = display.mouseX
             y0 = display.mouseY
             mouse_down = True
-        elif( display.mouseLeft and mouse_down ):
+        elif display.mouseLeft:
             dl.circle((x0,y0),radius=10,color=Color.RED)
             dl.rectangle2pts( (display.mouseX,display.mouseY),(x0,y0),color=Color.RED)
             dl.circle((display.mouseX,display.mouseY),radius=10,color=Color.RED)

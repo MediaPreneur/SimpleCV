@@ -35,11 +35,7 @@ class HueHistogramFeatureExtractor(FeatureExtractorBase):
         This method gives the names of each field in the feature vector in the
         order in which they are returned. For example, 'xpos' or 'width'
         """
-        retVal = []
-        for i in range(self.mNBins):
-            name = "Hue"+str(i)
-            retVal.append(name)
-        return retVal
+        return [f"Hue{str(i)}" for i in range(self.mNBins)]
 
     def getNumFields(self):
         """

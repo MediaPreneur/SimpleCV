@@ -77,12 +77,12 @@ def mfTracker(img, bb, ts, oldimg, **kwargs):
     winsize_lk = 4
 
     for key in kwargs:
-        if key == 'numM':
+        if key == 'margin':
+            margin = kwargs[key]
+        elif key == 'numM':
             numM = kwargs[key]
         elif key == 'numN':
             numN = kwargs[key]
-        elif key == 'margin':
-            margin = kwargs[key]
         elif key == 'winsize':
             winsize_ncc = kwargs[key]
         elif key == 'winsize_lk':
@@ -93,8 +93,7 @@ def mfTracker(img, bb, ts, oldimg, **kwargs):
     bb = [bb[0], bb[1], bb[0]+bb[2], bb[1]+bb[3]]
     bb, shift = fbtrack(oldg, newg, bb, numM, numN, margin, winsize_ncc, winsize_lk)
     bb = [bb[0], bb[1], bb[2]-bb[0], bb[3]-bb[1]]
-    track = MFTrack(img, bb, shift)
-    return track
+    return MFTrack(img, bb, shift)
 
 def fbtrack(imgI, imgJ, bb, numM=10, numN=10,margin=5,winsize_ncc=10, winsize_lk=4):
     """
@@ -227,13 +226,10 @@ def getMedianUnmanaged(a):
         try:
             newl.remove(0)
         except ValueError:
-            if newl:
-                return newl[len(newl)/2]
-            return 0
+            return newl[len(newl)/2] if newl else 0
 
 def getMedian(a):
-    median = getMedianUnmanaged(a)
-    return median
+    return getMedianUnmanaged(a)
 
 def calculateBBCenter(bb):
     """
@@ -251,8 +247,7 @@ def calculateBBCenter(bb):
     center - A tuple of two floating points
     
     """
-    center = (0.5*(bb[0] + bb[2]),0.5*(bb[1]+bb[3]))
-    return center
+    return 0.5*(bb[0] + bb[2]), 0.5*(bb[1]+bb[3])
     
 def getFilledBBPoints(bb, numM, numN, margin):
     """
@@ -275,10 +270,9 @@ def getFilledBBPoints(bb, numM, numN, margin):
     """
     pointDim = 2
     bb_local = (bb[0] + margin, bb[1] + margin, bb[2] - margin, bb[3] - margin)
-    if numM == 1 and numN == 1 :
-        pts = calculateBBCenter(bb_local)
-        return pts
-    
+    if numM == 1 and numN == 1:
+        return calculateBBCenter(bb_local)
+
     elif numM > 1 and numN == 1:
         divM = numM - 1
         divN = 2
@@ -289,9 +283,9 @@ def getFilledBBPoints(bb, numM, numN, margin):
             for j in range(numM):
                 pt[i * numM * pointDim + j * pointDim + 0] = center[0]
                 pt[i * numM * pointDim + j * pointDim + 1] = bb_local[1] + j * spaceM
-                
+
         return pt
-        
+
     elif numM == 1 and numN > 1:
         divM = 2
         divN = numN - 1
@@ -303,16 +297,16 @@ def getFilledBBPoints(bb, numM, numN, margin):
                 pt[i * numM * pointDim + j * pointDim + 0] = bb_local[0] + i * spaceN
                 pt[i * numM * pointDim + j * pointDim + 1] = center[1]
         return pt
-        
+
     elif numM > 1 and numN > 1:
         divM = numM - 1
         divN = numN - 1
-    
+
     spaceN = (bb_local[2] - bb_local[0]) / divN
     spaceM = (bb_local[3] - bb_local[1]) / divM
 
     pt = [0.0]*((numN-1)*numM*pointDim+numM*pointDim)
-    
+
     for i in range(numN):
         for j in range(numM):
             pt[i * numM * pointDim + j * pointDim + 0] = float(bb_local[0] + i * spaceN)
@@ -451,8 +445,7 @@ def euclideanDistance(point1,point2):
     
     match = returns a vector of eculidean distance
     """
-    match = ((point1[:,0]-point2[:,0])**2+(point1[:,1]-point2[:,1])**2)**0.5
-    return match
+    return ((point1[:,0]-point2[:,0])**2+(point1[:,1]-point2[:,1])**2)**0.5
 
 def normCrossCorrelation(img1, img2, pt0, pt1, status, winsize, method=cv2.cv.CV_TM_CCOEFF_NORMED):
     """

@@ -156,15 +156,14 @@ class BlobMaker:
         retVal.x = bb[0]+(bb[2]/2)
         retVal.y = bb[1]+(bb[3]/2)
         retVal.mPerimeter = cv.ArcLength(seq)
-        if( seq is not None):  #KAS
+        if ( seq is not None):  #KAS
             retVal.mContour = list(seq)
             try:
                 import cv2
-                if( retVal.mContour is not None):
+                if ( retVal.mContour is not None):
                     retVal.mContourAppx = []
                     appx = cv2.approxPolyDP(np.array([retVal.mContour],'float32'),appx_level,True)
-                    for p in appx:
-                        retVal.mContourAppx.append((int(p[0][0]),int(p[0][1])))
+                    retVal.mContourAppx.extend((int(p[0][0]),int(p[0][1])) for p in appx)
             except:
                 pass
 
@@ -224,7 +223,7 @@ class BlobMaker:
         #retVal.mMask = Image(mask)
 
         retVal.mAvgColor = self._getAvg(color.getBitmap(),bb,mask)
-        retVal.mAvgColor = retVal.mAvgColor[0:3]
+        retVal.mAvgColor = retVal.mAvgColor[:3]
         #retVal.mAvgColor = self._getAvg(color.getBitmap(),retVal.mBoundingBox,mask)
         #retVal.mAvgColor = retVal.mAvgColor[0:3]
 
