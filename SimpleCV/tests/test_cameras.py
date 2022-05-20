@@ -24,7 +24,6 @@ def test_camera_image():
 
     img = mycam.getImage()
     img.save(testoutput)
-    pass
 
 def test_camera_multiple_instances():
     cam1 = Camera()
@@ -40,4 +39,3 @@ def test_camera_multiple_instances():
 
     if not cam3 or not img3:
         assert False
-    pass

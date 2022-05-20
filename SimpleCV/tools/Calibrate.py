@@ -33,11 +33,13 @@ def drawrect(img, pt1, pt2):
     drawline(img, pt1, (pt2[0], pt1[1]))
 
 def inrect(rect, pts):
-    for p in pts:
-        if p[0] < rect[0][0] or p[1] < rect[0][1] or p[0] > rect[1][0] or p[1] > rect[1][1]:
-            return False
-
-    return True
+    return not any(
+        p[0] < rect[0][0]
+        or p[1] < rect[0][1]
+        or p[0] > rect[1][0]
+        or p[1] > rect[1][1]
+        for p in pts
+    )
 
 def saveCalibrationImage(i, imgset, dims):
     """
@@ -57,7 +59,7 @@ def saveCalibrationImage(i, imgset, dims):
     if not save_location:
         return
 
-    filename = save_location + "_image" + str(len(imgset)) + ".png"
+    filename = f"{save_location}_image{len(imgset)}.png"
     imgset[-1].save(filename)
 
 def testrect(img, cb, calibration_set, dims, rect):
@@ -71,7 +73,7 @@ def relativeSize(cb, i):
     return cb.area() / float(i.width * i.height)
 
 def relPercent(cb, i):
-    return str(int(relativeSize(cb,i) * 100)) + "%"
+    return f"{int(relativeSize(cb,i) * 100)}%"
 
 def horizontalTilt(cb):  #ratio between the 0,3 and 1,2 point pairs
     distance_ratio = distance(cb.points[0], cb.points[3]) / distance(cb.points[1], cb.points[2])
@@ -112,7 +114,11 @@ def findLargeFlat(cb, i, calibration_set, dims):
     if (relativeSize(cb, i) > 0.7):
         saveCalibrationImage(i, calibration_set, dims)
     else:
-        showText(i,  "Chessboard is " + str(int(relativeSize(cb,i) * 100)) + " < 70% of view area, bring it closer")
+        showText(
+            i,
+            f"Chessboard is {int(relativeSize(cb,i) * 100)} < 70% of view area, bring it closer",
+        )
+
 
     cb.draw()
 
@@ -142,9 +148,9 @@ def findSmallFlat(cb, i, calibration_set, dims):
         return
 
     if (relativeSize(cb, i) < 0.13):
-        showText(i,  "Chessboard is " + relPercent(cb, i) + " < 13% bring it closer")
-    elif (relativeSize(cb, i) > 0.25):
-        showText(i,  "Chessboard is " + relPercent(cb, i) + " > 25% move it back")
+        showText(i, f"Chessboard is {relPercent(cb, i)} < 13% bring it closer")
+    elif relativeSize(cb, i) > 0.25:
+        showText(i, f"Chessboard is {relPercent(cb, i)} > 25% move it back")
     elif (horizontalTilt(cb) < 0.9 or verticalTilt < 0.9):
         showText(i,  "Chessboard is tilted, try to keep it flat")
     elif (lcs % 5 == 0): #top left corner
@@ -181,7 +187,7 @@ def findHorizTilted(cb, i, calibration_set, dims):
         return
 
     if relativeSize(cb, i) < 0.4:
-        showText(i,  "Chessboard is " + relPercent(cb, i) + " / 40%, bring it closer")
+        showText(i, f"Chessboard is {relPercent(cb, i)} / 40%, bring it closer")
     elif horizontalTilt(cb) > 0.9:
         showText(i,  "Tip the right or left side of the chessboard towards the camera")
     else:
@@ -197,7 +203,7 @@ def findVertTilted(cb, i, calibration_set, dims):
         return
 
     if relativeSize(cb, i) < 0.4:
-        showText(i,  "Chessboard is " + relPercent(cb, i) + " / 40%, bring it closer")
+        showText(i, f"Chessboard is {relPercent(cb, i)} / 40%, bring it closer")
     elif verticalTilt(cb) > 0.9:
         showText(i,  "Tip the top or bottom of the chessboard towards the camera")
     else:
@@ -213,7 +219,7 @@ def findCornerTilted(cb, i, calibration_set, dims):
         return
 
     if relativeSize(cb, i) < 0.4:
-        showText(i,  "Chessboard is " + relPercent(cb, i) + " / 40%, bring it closer")
+        showText(i, f"Chessboard is {relPercent(cb, i)} / 40%, bring it closer")
     elif verticalTilt(cb) > 0.9 or horizontalTilt(cb) > 0.9:
         showText(i,  "Tip the corner of the chessboard more towards the camera")
     else:
@@ -275,11 +281,7 @@ def findPlane(cb, i, calibration_set, dims):
 def main(camindex = 0, capture_width = 800, capture_height = 600, chessboard_width = 8, chessboard_height = 5, planemode = False, gridsize = 0.029, calibrationFile = "default"):
     global save_location
 
-    if planemode:
-        mode = 7
-    else:
-        mode = 0
-
+    mode = 7 if planemode else 0
     dims = (chessboard_width, chessboard_height)
 
     cam = Camera(camindex, prop_set = { "width": capture_width, "height": capture_height })
@@ -329,7 +331,7 @@ def main(camindex = 0, capture_width = 800, capture_height = 600, chessboard_wid
             cam.saveCalibration(calibrationFile)
             mode = 6
         elif mode == 6:
-            showText(i,  "Saved calibration to " + calibrationFile)
+            showText(i, f"Saved calibration to {calibrationFile}")
         elif mode == 7:
             findPlane(cb, i, calibration_set, dims)
             if (len(calibration_set) == 25):

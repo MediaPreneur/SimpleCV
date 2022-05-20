@@ -140,17 +140,14 @@ class TurkingModule:
         >>>> iset = turkModule.getClass('cats')
         >>>> iset.show()
         """
-        if(className in self.classMap):
-            return self.classMap[className]
-        else:
-            return None
+        return self.classMap[className] if (className in self.classMap) else None
 
     def _drawControls(self,img,font_size,color,spacing ):
         img.drawText("space - skip",10,spacing,fontsize=font_size,color=color)
         img.drawText("esc - exit",10,2*spacing,fontsize=font_size,color=color)
         y = 3*spacing
         for k,cls in self.keyMap.items():
-            str = k + " - " + cls
+            str = f"{k} - {cls}"
             img.drawText(str,10,y,fontsize=font_size,color=color)
             y = y + spacing
         return img

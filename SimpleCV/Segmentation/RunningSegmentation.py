@@ -46,7 +46,7 @@ class RunningSegmentation(SegmentationBase):
             return
 
         self.mColorImg = img
-        if( self.mModelImg == None ):
+        if self.mModelImg is None:
             self.mModelImg = Image(cv.CreateImage((img.width,img.height), cv.IPL_DEPTH_32F, 3))
             self.mDiffImg = Image(cv.CreateImage((img.width,img.height), cv.IPL_DEPTH_32F, 3))
         else:
@@ -101,11 +101,10 @@ class RunningSegmentation(SegmentationBase):
         """
         retVal = None
         img = self._floatToInt(self.mDiffImg)
-        if( whiteFG ):
-            retVal = img.binarize(thresh=self.mThresh)
+        if whiteFG:
+            return img.binarize(thresh=self.mThresh)
         else:
-            retVal = img.binarize(thresh=self.mThresh).invert()
-        return retVal
+            return img.binarize(thresh=self.mThresh).invert()
 
     def getSegmentedBlobs(self):
         """

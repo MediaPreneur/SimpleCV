@@ -13,7 +13,7 @@ class FeatureExtractorBase(object):
     """
 
     __metaclass__ = abc.ABCMeta
-    def load(cls, fname):
+    def load(self, fname):
         """
         load segmentation settings to file.
         """
@@ -25,9 +25,8 @@ class FeatureExtractorBase(object):
         """
         Save segmentation settings to file.
         """
-        output = open(fname, 'wb')
-        pickle.dump(self,output,2) # use two otherwise it borks the system
-        output.close()
+        with open(fname, 'wb') as output:
+            pickle.dump(self,output,2) # use two otherwise it borks the system
 
     @abc.abstractmethod
     def extract(self, img):

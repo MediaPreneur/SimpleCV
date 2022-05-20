@@ -218,7 +218,7 @@ class Color:
         return h_float*180
 
     @classmethod
-    def hueToRGB(self, h):
+    def hueToRGB(cls, h):
         """
         **SUMMARY**
 
@@ -242,7 +242,7 @@ class Color:
         return (round(255.0*r),round(255.0*g),round(255.0*b))
 
     @classmethod
-    def hueToBGR(self,h):
+    def hueToBGR(cls, h):
         """
         **SUMMARY**
 
@@ -261,10 +261,10 @@ class Color:
         >>> c = Color.huetoBGR(0)
 
         """
-        return(tuple(reversed(self.hueToRGB(h))))
+        return tuple(reversed(cls.hueToRGB(h)))
 
     @classmethod
-    def getAverageRGB(self,rgb):
+    def getAverageRGB(cls, rgb):
         """
         **SUMMARY**
 
@@ -286,7 +286,7 @@ class Color:
         return int(((rgb[0]+rgb[1]+rgb[2])/3))
 
     @classmethod
-    def getLightness(self,rgb):
+    def getLightness(cls, rgb):
         """
         **SUMMARY**
 
@@ -312,7 +312,7 @@ class Color:
         return int(((max(rgb)+min(rgb))/2))
 
     @classmethod
-    def getLuminosity(self,rgb):
+    def getLuminosity(cls, rgb):
         """
         **SUMMARY**
 

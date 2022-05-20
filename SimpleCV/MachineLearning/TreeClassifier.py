@@ -94,7 +94,7 @@ class TreeClassifier:
             self.mFlavorParams = flavorDict
         self.mFeatureExtractors =  featureExtractors
 
-    def load(cls, fname):
+    def load(self, fname):
         """
         Load the classifier from file
         """
@@ -106,9 +106,8 @@ class TreeClassifier:
         """
         Save the classifier to file
         """
-        output = open(fname, 'wb')
-        pickle.dump(self,output,2) # use two otherwise it w
-        output.close()
+        with open(fname, 'wb') as output:
+            pickle.dump(self,output,2) # use two otherwise it w
 
     def __getstate__(self):
         mydict = self.__dict__.copy()
@@ -482,8 +481,8 @@ class TreeClassifier:
         return([dataset,count,correct])
 
     def _WriteText(self, disp, img, txt,color):
-        if(disp is not None):
-            txt = ' ' + txt + ' '
+        if (disp is not None):
+            txt = f' {txt} '
             img = img.adaptiveScale(disp.resolution)
             layer = DrawingLayer((img.width,img.height))
             layer.setFontSize(60)

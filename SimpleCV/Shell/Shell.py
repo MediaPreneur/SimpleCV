@@ -44,9 +44,7 @@ def shellclear():
 #method to get magic_* methods working in bpython
 def make_magic(method):
     def wrapper(*args, **kwargs):
-        if not args:
-            return method('', '')
-        return method('', *args, **kwargs)
+        return method('', *args, **kwargs) if args else method('', '')
 
     return wrapper
 
@@ -85,8 +83,11 @@ def magic_walkthrough(self, arg):
 def magic_docs(self, arg):
     webbrowser.open('http://www.simplecv.org/docs/')
 
-banner = '+-----------------------------------------------------------+\n'
-banner += ' SimpleCV '
+banner = (
+    '+-----------------------------------------------------------+\n'
+    + ' SimpleCV '
+)
+
 banner += SIMPLECV_VERSION
 banner += ' [interactive shell] - http://simplecv.org\n'
 banner += '+-----------------------------------------------------------+\n'
@@ -159,8 +160,7 @@ def setup_bpython():
     tutorial = make_magic(magic_tutorial)
     walkthrough = make_magic(magic_walkthrough)
     forums = make_magic(magic_forums)
-    temp = locals().copy()
-    temp.update(globals())
+    temp = locals() | globals()
     return bpython.embed(locals_=temp, banner=banner)
 
 
@@ -180,8 +180,7 @@ def run_notebook(mainArgs):
         from IPython.frontend.html.notebook import notebookapp
         from IPython.frontend.html.notebook import kernelmanager
 
-    code = ""
-    code += "from SimpleCV import *;"
+    code = "" + "from SimpleCV import *;"
     code += "init_options_handler.enable_notebook();"
 
     kernelmanager.MappingKernelManager.first_beat = 30.0
@@ -197,10 +196,10 @@ def run_notebook(mainArgs):
 
 def self_update():
     URL = "https://github.com/sightmachine/SimpleCV/zipball/master"
-    command = "pip install -U %s" % URL
+    command = f"pip install -U {URL}"
 
     if os.getuid() == 0:
-        command = "sudo " + command
+        command = f"sudo {command}"
 
     returncode = call(command, shell=True)
     sys.exit()

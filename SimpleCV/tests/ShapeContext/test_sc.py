@@ -8,7 +8,7 @@ img2 = Image('deformed.png')
 img2 = img2.invert()
 blobs2 = img2.findBlobs()
 
-for j in range(0,len(blobs)):
+for j in range(len(blobs)):
     data = blobs[j].ShapeContextMatch(blobs2[j])
     mapvals = data[0]
     fs1 = blobs[j].getShapeContext()
@@ -20,10 +20,10 @@ img2 = img2.applyLayers()
 img = img.applyLayers()
 img3 = img.sideBySide(img2,'bottom')
 
-for j in range(0,3):
+for j in range(3):
     data = blobs[j].ShapeContextMatch(blobs2[j])
     mapvals = data[0]
-    for i in range(0,len(blobs[j]._completeContour)):
+    for i in range(len(blobs[j]._completeContour)):
     #img3.clearLayers()
         lhs = blobs[j]._completeContour[i]
         idx = mapvals[i];

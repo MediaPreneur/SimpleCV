@@ -112,8 +112,7 @@ class DrawingLayer:
 
         if(color == Color.DEFAULT):
             color = self._mDefaultColor
-        retVal = pg.Color(color[0], color[1], color[2], alpha)
-        return retVal
+        return pg.Color(color[0], color[1], color[2], alpha)
 
     def setDefaultColor(self, color):
         """
@@ -266,7 +265,7 @@ class DrawingLayer:
         r = pg.Rect((x,y),(w,h))
         pg.draw.rect(self._mSurface, self._csvRGB2pgColor(color, alpha), r, width)
 
-        self._mSVG.add(self._mSVG.rect(insert=(int(x),int(y)), size=(int(w),int(h))))
+        self._mSVG.add(self._mSVG.rect(insert=(int(x),int(y)), size=(w, h)))
 
         return None
 
@@ -328,13 +327,12 @@ class DrawingLayer:
         """
         if(filled):
             width = 0
-        if(not filled):
-            if(antialias and width == 1):
-                pg.draw.aalines(self._mSurface, self._csvRGB2pgColor(color, alpha), True, points, width)
-            else:
-                pg.draw.lines(self._mSurface, self._csvRGB2pgColor(color, alpha), True, points, width)
-        else:
+        if filled:
             pg.draw.polygon(self._mSurface, self._csvRGB2pgColor(color, alpha), points, width)
+        elif (antialias and width == 1):
+            pg.draw.aalines(self._mSurface, self._csvRGB2pgColor(color, alpha), True, points, width)
+        else:
+            pg.draw.lines(self._mSurface, self._csvRGB2pgColor(color, alpha), True, points, width)
         return None
 
     def circle(self, center, radius, color = Color.DEFAULT, width = 1, filled = False, alpha = -1, antialias = True):
@@ -522,7 +520,7 @@ class DrawingLayer:
         del pixels_alpha
         self._mSurface.blit(tsurface, location)
 
-        fontStyle = "font-size: {}px;".format(self._mFontSize - 7) # Adjust for web
+        fontStyle = f"font-size: {self._mFontSize - 7}px;"
         if self._mFontBold:
             fontStyle += "font-weight: bold;"
         if self._mFontItalic:
@@ -530,7 +528,7 @@ class DrawingLayer:
         if self._mFontUnderline:
             fontStyle += "text-decoration: underline;"
         if self._mFontName:
-            fontStyle += "font-family: \"{}\";".format(self._mFontName)
+            fontStyle += f'font-family: "{self._mFontName}";'
         alteredLocation = (location[0], location[1] + self.textDimensions(text)[1])
         altInt = tuple(int(x) for x in alteredLocation)
         self._mSVG.add(self._mSVG.text(text, insert=altInt, style=fontStyle))

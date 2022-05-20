@@ -225,11 +225,9 @@ class FlickrAPI:
         if not self.__handlerCache.has_key(method):
             def handler(_self = self, _method = method, **arg):
                 _method = "flickr." + _method.replace("_", ".")
-                url = "http://" + FlickrAPI.flickrHost + \
-                        FlickrAPI.flickrRESTForm
+                url = (f"http://{FlickrAPI.flickrHost}" + FlickrAPI.flickrRESTForm)
                 arg["method"] = _method
-                postData = urllib.urlencode(arg) + "&api_sig=" + \
-                        _self.__sign(arg)
+                postData = (f"{urllib.urlencode(arg)}&api_sig=" + _self.__sign(arg))
                 #print "--url---------------------------------------------"
                 #print url
                 #print "--postData----------------------------------------"
@@ -259,8 +257,7 @@ class FlickrAPI:
 
         data = {"api_key": self.apiKey, "frob": frob, "perms": perms}
         data["api_sig"] = self.__sign(data)
-        return "http://%s%s?%s" % (FlickrAPI.flickrHost, \
-                FlickrAPI.flickrAuthForm, urllib.urlencode(data))
+        return f"http://{FlickrAPI.flickrHost}{FlickrAPI.flickrAuthForm}?{urllib.urlencode(data)}"
 
     #-------------------------------------------------------------------
     def upload(self, filename=None, jpegData=None, **arg):
@@ -288,22 +285,33 @@ class FlickrAPI:
 
         """
 
-        if filename == None and jpegData == None or \
-                filename != None and jpegData != None:
+        if (
+            filename is None
+            and jpegData is None
+            or filename != None
+            and jpegData != None
+        ):
 
             raise UploadException("filename OR jpegData must be specified")
 
         # verify key names
         for a in arg.keys():
-            if a != "api_key" and a != "auth_token" and a != "title" and \
-                    a != "description" and a != "tags" and a != "is_public" and \
-                    a != "is_friend" and a != "is_family":
+            if a not in [
+                "api_key",
+                "auth_token",
+                "title",
+                "description",
+                "tags",
+                "is_public",
+                "is_friend",
+                "is_family",
+            ]:
 
                 sys.stderr.write("FlickrAPI: warning: unknown parameter " \
                         "\"%s\" sent to FlickrAPI.upload\n" % (a))
 
         arg["api_sig"] = self.__sign(arg)
-        url = "http://" + FlickrAPI.flickrHost + FlickrAPI.flickrUploadForm
+        url = f"http://{FlickrAPI.flickrHost}{FlickrAPI.flickrUploadForm}"
 
         # construct POST data
         boundary = mimetools.choose_boundary()
@@ -331,20 +339,18 @@ class FlickrAPI:
 
         #print body
 
-        if filename != None:
+        if filename is None:
+            data = jpegData
+
+        else:
             fp = file(filename, "rb")
             data = fp.read()
             fp.close()
-        else:
-            data = jpegData
-
-        postData = body.encode("utf_8") + data + \
-                ("--%s--" % (boundary)).encode("utf_8")
+        postData = (body.encode("utf_8") + data + f"--{boundary}--".encode("utf_8"))
 
         request = urllib2.Request(url)
         request.add_data(postData)
-        request.add_header("Content-Type", \
-                "multipart/form-data; boundary=%s" % boundary)
+        request.add_header("Content-Type", f"multipart/form-data; boundary={boundary}")
         response = urllib2.urlopen(request)
         rspXML = response.read()
 
@@ -353,39 +359,32 @@ class FlickrAPI:
 
     #-----------------------------------------------------------------------
     #@classmethod
-    def testFailure(cls, rsp, exit=True):
+    def testFailure(self, rsp, exit=True):
         """Exit app if the rsp XMLNode indicates failure."""
         if rsp['stat'] == "fail":
-            sys.stderr.write("%s\n" % (cls.getPrintableError(rsp)))
+            sys.stderr.write("%s\n" % self.getPrintableError(rsp))
             if exit: sys.exit(1)
     testFailure = classmethod(testFailure)
 
     #-----------------------------------------------------------------------
     #@classmethod
-    def getPrintableError(cls, rsp):
+    def getPrintableError(self, rsp):
         """Return a printed error message string."""
-        return "%s: error %s: %s" % (rsp.elementName, \
-                cls.getRspErrorCode(rsp), cls.getRspErrorMsg(rsp))
+        return f"{rsp.elementName}: error {self.getRspErrorCode(rsp)}: {self.getRspErrorMsg(rsp)}"
     getPrintableError = classmethod(getPrintableError)
 
     #-----------------------------------------------------------------------
     #@classmethod
-    def getRspErrorCode(cls, rsp):
+    def getRspErrorCode(self, rsp):
         """Return the error code of a response, or 0 if no error."""
-        if rsp['stat'] == "fail":
-            return rsp.err[0]['code']
-
-        return 0
+        return rsp.err[0]['code'] if rsp['stat'] == "fail" else 0
     getRspErrorCode = classmethod(getRspErrorCode)
 
     #-----------------------------------------------------------------------
     #@classmethod
-    def getRspErrorMsg(cls, rsp):
+    def getRspErrorMsg(self, rsp):
         """Return the error message of a response, or "Success" if no error."""
-        if rsp['stat'] == "fail":
-            return rsp.err[0]['msg']
-
-        return "Success"
+        return rsp.err[0]['msg'] if rsp['stat'] == "fail" else "Success"
     getRspErrorMsg = classmethod(getRspErrorMsg)
 
     #-----------------------------------------------------------------------
@@ -469,11 +468,15 @@ class FlickrAPI:
             else:
                 # see if we have enough permissions
                 tokenPerms = rsp.auth[0].perms[0].elementText
-                if tokenPerms == "read" and perms != "read": token = None
-                elif tokenPerms == "write" and perms == "delete": token = None
+                if (
+                    tokenPerms == "read"
+                    and perms != "read"
+                    or tokenPerms == "write"
+                    and perms == "delete"
+                ): token = None
 
         # get a new token if we need one
-        if token == None:
+        if token is None:
             # get the frob
             rsp = self.auth_getFrob(api_key=self.apiKey)
             self.testFailure(rsp)

@@ -42,30 +42,30 @@ class LineScan(list):
         self.col = None
         self.channel = -1
         for key in kwargs:
-            if key == 'pointLocs':
-                if kwargs[key] is not None:
-                    self.pointLoc = kwargs[key]
             if key == 'image':
                 if kwargs[key] is not None:
                     self.img = kwargs[key]
-            if key == 'pt1':
+            elif key == 'pointLocs':
+                if kwargs[key] is not None:
+                    self.pointLoc = kwargs[key]
+            elif key == 'pt1':
                 if kwargs[key] is not None:
                     self.pt1 = kwargs[key]
-            if key == 'pt2':
+            elif key == 'pt2':
                 if kwargs[key] is not None:
                     self.pt2 = kwargs[key]
-            if key == "x":
-                if kwargs[key] is not None:
-                    self.col = kwargs[key]
-            if key == "y":
-                if kwargs[key] is not None:
-                    self.row = kwargs[key]
-            if key == "channel":
+            elif key == "channel":
                 if kwargs[key] is not None:
                     self.channel = kwargs[key]
-                    
-        if(self.pointLoc is None):
-            self.pointLoc = zip(range(0,len(self)),range(0,len(self)))
+
+            elif key == "x":
+                if kwargs[key] is not None:
+                    self.col = kwargs[key]
+            elif key == "y":
+                if kwargs[key] is not None:
+                    self.row = kwargs[key]
+        if (self.pointLoc is None):
+            self.pointLoc = zip(range(len(self)), range(len(self)))
 
     def __getitem__(self,key):
         """
@@ -188,7 +188,7 @@ class LineScan(list):
         for i in range(len(smoothed)):
             smoothed[i]=sum(np.array(self[i:i+window])*weight)/sum(weight)
         # recenter the signal so it sits nicely on top of the old
-        front = self[0:(degree-1)]
+        front = self[:degree-1]
         front += smoothed
         front += self[-1*degree:]
         retVal = LineScan(front,image=self.image,pointLoc=self.pointLoc,pt1=self.pt1,pt2=self.pt2)
@@ -356,11 +356,12 @@ class LineScan(list):
         """
         temp = np.array(self,dtype='float32')
         d = [0]
-        d += list(temp[1:]-temp[0:-1])
-        retVal = LineScan(d,image=self.image,pointLoc=self.pointLoc,pt1=self.pt1,pt2=self.pt2)
+        d += list(temp[1:] - temp[:-1])
         #retVal.image = self.image
         #retVal.pointLoc = self.pointLoc
-        return retVal
+        return LineScan(
+            d, image=self.image, pointLoc=self.pointLoc, pt1=self.pt1, pt2=self.pt2
+        )
 
     def localMaxima(self):
         """
@@ -511,7 +512,7 @@ class LineScan(list):
 
         """
         yvals = np.array(self,dtype='float32')
-        xvals = range(0,len(yvals),1)
+        xvals = range(len(yvals))
         popt,pcov = spo.curve_fit(f,xvals,yvals,p0=p0)
         yvals = f(xvals,*popt)
         retVal = LineScan(list(yvals),image=self.image,pointLoc=self.pointLoc,pt1=self.pt1,pt2=self.pt2)
@@ -550,7 +551,7 @@ class LineScan(list):
 
         """
         yvals = np.array(self,dtype='float32')
-        xvals = range(0,len(yvals),1)
+        xvals = range(len(yvals))
         popt,pcov = spo.curve_fit(f,xvals,yvals,p0=p0)
         return popt
 
@@ -586,8 +587,14 @@ class LineScan(list):
 
         """
         out = np.convolve(self,np.array(kernel,dtype='float32'),'same')
-        retVal = LineScan(out,image=self.image,pointLoc=self.pointLoc,pt1=self.pt1,pt2=self.pt2,channel=self.channel)
-        return retVal
+        return LineScan(
+            out,
+            image=self.image,
+            pointLoc=self.pointLoc,
+            pt1=self.pt1,
+            pt2=self.pt2,
+            channel=self.channel,
+        )
 
     def fft(self):
         """
@@ -690,8 +697,7 @@ class LineScan(list):
 
         """
         lut = None
-        if( isinstance(defaultVal,list) or
-            isinstance(defaultVal,tuple)):
+        if isinstance(defaultVal, (list, tuple)):
             start = np.clip(defaultVal[0],0,255)
             stop = np.clip(defaultVal[1],0,255)
             lut = np.around(np.linspace(start,stop,256),0)
@@ -821,9 +827,7 @@ class LineScan(list):
 
         """
 
-        out = []
-        for pt in self:
-            out.append(255-pt)
+        out = [255-pt for pt in self]
         retVal = LineScan(out,image=self.image,pointLoc=self.pointLoc,pt1=self.pt1,pt2=self.pt2)
         retVal._update(self)
         return retVal
@@ -867,9 +871,7 @@ class LineScan(list):
 
         """
         mean = float(sum(self))/len(self)
-        summation = 0
-        for num in self:
-            summation += (num - mean)**2
+        summation = sum((num - mean)**2 for num in self)
         return summation/len(self)
 
     def std(self):
@@ -895,9 +897,7 @@ class LineScan(list):
 
         """
         mean = float(sum(self))/len(self)
-        summation = 0
-        for num in self:
-            summation += (num - mean)**2
+        summation = sum((num - mean)**2 for num in self)
         return np.sqrt(summation/len(self))
 
     def median(self,sz=5):
@@ -929,7 +929,7 @@ class LineScan(list):
         if( sz%2==0 ):
             sz = sz+1
         skip = int(np.floor(sz/2))
-        out = self[0:skip]
+        out = self[:skip]
         vsz = len(self)
         for idx in range(skip,vsz-skip):
             val = np.median(self[(idx-skip):(idx+skip)])
@@ -963,10 +963,7 @@ class LineScan(list):
 
         """
         vals = np.where(np.array(self)==value)[0]
-        retVal = None
-        if( len(vals) > 0 ):
-            retVal = vals[0]
-        return retVal
+        return vals[0] if ( len(vals) > 0 ) else None
 
     def findLastIdxEqualTo(self,value=255):
         """
@@ -992,10 +989,7 @@ class LineScan(list):
         """
 
         vals = np.where(np.array(self)==value)[0]
-        retVal = None
-        if( len(vals) > 0 ):
-            retVal = vals[-1]
-        return retVal
+        return vals[-1] if ( len(vals) > 0 ) else None
 
     def findFirstIdxGreaterThan(self,value=255):
         """
@@ -1020,10 +1014,7 @@ class LineScan(list):
 
         """
         vals = np.where(np.array(self)>=value)[0]
-        retVal = None
-        if( len(vals) > 0 ):
-            retVal = vals[0]
-        return retVal
+        return vals[0] if ( len(vals) > 0 ) else None
     def applyLUT(self,lut):
         """
         **SUMMARY**
@@ -1048,9 +1039,7 @@ class LineScan(list):
         >>>> plt.plot(ls2)
 
         """
-        out = []
-        for pt in self:
-            out.append(lut[pt])
+        out = [lut[pt] for pt in self]
         retVal = LineScan(out,image=self.image,pointLoc=self.pointLoc,pt1=self.pt1,pt2=self.pt2)
         retVal._update(self)
         return retVal
@@ -1154,10 +1143,13 @@ class LineScan(list):
         if algo=="uniform":
             kernel=list(1/float(diameter)*np.ones(diameter))
         elif algo=="gaussian":
-            kernel=list()
             r=float(diameter)/2
-            for i in range(-int(r),int(r)+1):
-                kernel.append(np.exp(-i**2/(2*(r/3)**2))/(np.sqrt(2*np.pi)*(r/3)))
+            kernel = [
+                np.exp(-(i**2) / (2 * (r / 3) ** 2))
+                / (np.sqrt(2 * np.pi) * (r / 3))
+                for i in range(-int(r), int(r) + 1)
+            ]
+
         retVal = LineScan(map(int,self.convolve(kernel)))
         retVal._update(self)
         return retVal
@@ -1283,8 +1275,7 @@ class LineScan(list):
         Implementation taken from http://www.scipy.org/Cookbook/Interpolation  
 
         """
-        if degree > 4:
-            degree = 4  # No significant improvement with respect to time usage
+        degree = min(degree, 4)
         if degree < 1:
             warnings.warn('LineScan.fitSpline - degree needs to be >= 1')
             return None

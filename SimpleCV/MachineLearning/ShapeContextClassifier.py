@@ -159,7 +159,5 @@ class ShapeContextClassifier():
         n = np.clip(n,1,len(self.labels))
         points,descriptors,count,matchDict,matchStd = self._buildMatchDict(image,blobFilter)
         best_matches = list(sorted(matchDict, key=matchDict.__getitem__))
-        retList = []
-        for k in best_matches:
-            retList.append((k,matchDict[k]))
-        return retList[0:n], matchDict, matchStd
+        retList = [(k,matchDict[k]) for k in best_matches]
+        return retList[:n], matchDict, matchStd

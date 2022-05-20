@@ -174,7 +174,7 @@ class TemporalColorTracker:
             wndwSz = int(np.floor(windowSzPrct*len(self.data[key])))
             signal = self.data[key]
             # slide the window and get the std
-            data = [np.std(signal[i:i+wndwSz]) for i in range(0,len(signal)-wndwSz)]
+            data = [np.std(signal[i:i+wndwSz]) for i in range(len(signal)-wndwSz)]
             # find the first spot where sd is minimal
             index = np.where(data==np.min(data))[0][0]
             # find the mean for the window
@@ -220,7 +220,7 @@ class TemporalColorTracker:
                 self.vD[key] =  np.abs(self._steadyState[key][0]-valleyMean)
             else:
                 self.vD[key] = 0.00
-                
+
             self.doPeaks[key]=False
             best = self.vD[key]
             if( self.pD[key] > self.vD[key] ):
@@ -232,13 +232,13 @@ class TemporalColorTracker:
                 bestKey = key
         # Now we know which signal has the most spread
         # and what direction we are looking for.
-        if( forceChannel is not None ):
-            if(self.data.has_key(forceChannel)):
-                self._bestKey = forceChannel
-            else:
-                raise Exception('That is not a valid data channel')
-        else:
+        if forceChannel is None:
             self._bestKey = bestKey
+
+        elif (self.data.has_key(forceChannel)):
+            self._bestKey = forceChannel
+        else:
+            raise Exception('That is not a valid data channel')
 
         
     def _buildSignalProfile(self):
@@ -254,17 +254,16 @@ class TemporalColorTracker:
             self._isPeak = False
             peaks = self.valleys[key]
             self._cutoff = self._steadyState[key][0]-(self.vD[key]/2.0)
-        if( len(peaks) > 1 ):
-            p2p = np.array(peaks[1:])-np.array(peaks[:-1])
-            p2pMean = int(np.mean(p2p))
-            p2pS = int(np.std(p2p))
-            p2pMean = p2pMean + 2*p2pS
-            # constrain it to be an od window
-            if int(p2pMean) % 2 == 1:
-                p2pMean = p2pMean+1 
-            self._window = p2pMean
-        else:
+        if len(peaks) <= 1:
             raise Exception("Can't find enough peaks")
+        p2p = np.array(peaks[1:])-np.array(peaks[:-1])
+        p2pMean = int(np.mean(p2p))
+        p2pS = int(np.std(p2p))
+        p2pMean += 2*p2pS
+            # constrain it to be an od window
+        if p2pMean % 2 == 1:
+            p2pMean += 1
+        self._window = p2pMean
         if( self.doCorr and self._window is not None ):
             self._doCorr()
 

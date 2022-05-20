@@ -86,10 +86,10 @@ class HaarLikeFeature():
         Write the Haar cascade to a human readable file. file is an open file pointer.
         """
         file.write(self.mName)
-        file.write(" "+str(len(self.mRegions))+"\n")
+        file.write(f" {len(self.mRegions)}" + "\n")
         for i in range(len(self.mRegions)):
             temp = self.mRegions[i]
             for j in range(len(temp)):
-                file.write(str(temp[j])+' ')
+                file.write(f'{str(temp[j])} ')
             file.write('\n')
         file.write('\n')

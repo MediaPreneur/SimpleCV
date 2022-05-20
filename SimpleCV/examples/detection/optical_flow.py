@@ -13,11 +13,8 @@ def movement_check(x = 0,y = 0,t=1):
     if y > t:
         directionY = "Down"
 
-    direction = directionX + " " + directionY
-    if direction is not "":
-        return direction
-    else:
-        return "No Motion"
+    direction = f"{directionX} {directionY}"
+    return direction if direction is not "" else "No Motion"
 
 def main():
     scale_amount = (200,150)
@@ -31,23 +28,20 @@ def main():
     while d.isNotDone():
         current = cam.getImage()
         current = current.scale(scale_amount[0],scale_amount[1])
-        if( count < buffer ):
+        if ( count < buffer ):
             count = count + 1
-        else:
-            fs = current.findMotion(prev, window=15, method="BM")
-            lengthOfFs = len(fs)
-            if fs:
-                #~ fs.draw(color=Color.RED)
-                dx = 0
-                dy = 0
-                for f in fs:
-                    dx = dx + f.dx
-                    dy = dy + f.dy
+        elif fs := current.findMotion(prev, window=15, method="BM"):
+            dx = 0
+            dy = 0
+            for f in fs:
+                dx = dx + f.dx
+                dy = dy + f.dy
 
-                dx = (dx / lengthOfFs)
-                dy = (dy / lengthOfFs)
-                motionStr = movement_check(dx,dy,t)
-                current.drawText(motionStr,10,10)
+            lengthOfFs = len(fs)
+            dx = (dx / lengthOfFs)
+            dy = (dy / lengthOfFs)
+            motionStr = movement_check(dx,dy,t)
+            current.drawText(motionStr,10,10)
 
         prev = current
         time.sleep(0.01)

@@ -84,10 +84,9 @@ class PlayingCardFactory():
         otherwise return None
         """
         ppimg = self._preprocess(img)
-        retVal = PlayingCard(img,img.width/2,img.height/2)
         # create the feature, hang any preprocessing
         # steps on the feature
-        return retVal
+        return PlayingCard(img,img.width/2,img.height/2)
 
     def _estimateColor(self,card):
         """

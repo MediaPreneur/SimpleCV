@@ -41,9 +41,7 @@ def test_camera_constructor():
 
 def test_camera_image():
     mycam = VirtualCamera(testimage, "image")
-    if(doFullVCamCoverageTest(mycam)):
-        pass
-    else:
+    if not (doFullVCamCoverageTest(mycam)):
         assert False
 
 def test_camera_video():
@@ -51,25 +49,19 @@ def test_camera_video():
     img = mycam.getImage()
     img.save(testoutput)
     assert img.size() == (320, 240)
-    if(doFullVCamCoverageTest(mycam)):
-        pass
-    else:
+    if not (doFullVCamCoverageTest(mycam)):
         assert False
 
 def test_camera_iset():
     iset = ImageSet('./standard/')
     mycam = VirtualCamera(iset, "imageset")
     img = mycam.getImage()
-    if(doFullVCamCoverageTest(mycam)):
-        pass
-    else:
+    if not (doFullVCamCoverageTest(mycam)):
         assert False
 
 def test_camera_iset_directory():
     iset = './standard/'
     mycam = VirtualCamera(iset, "imageset")
     img = mycam.getImage()
-    if(doFullVCamCoverageTest(mycam)):
-        pass
-    else:
+    if not (doFullVCamCoverageTest(mycam)):
         assert False

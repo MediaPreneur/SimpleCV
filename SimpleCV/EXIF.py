@@ -85,11 +85,7 @@
 
 # Don't throw an exception when given an out of range character.
 def make_string(seq):
-    str = ''
-    for c in seq:
-        # Screen out non-printing characters
-        if 32 <= c and c < 256:
-            str += chr(c)
+    str = ''.join(chr(c) for c in seq if 32 <= c < 256)
     # If no printing chars
     if not str:
         return seq
@@ -98,7 +94,7 @@ def make_string(seq):
 # Special version to deal with the code in the first 8 bytes of a user comment.
 # First 8 bytes gives coding system e.g. ASCII vs. JIS vs Unicode
 def make_string_uc(seq):
-    code = seq[0:8]
+    code = seq[:8]
     seq = seq[8:]
     # Of course, this is only correct if ASCII, and the standard explicitly
     # allows JIS and Unicode.
@@ -459,7 +455,7 @@ def nikon_ev_bias(seq):
     if whole != 0:
         ret_str = ret_str + str(whole) + " "
     if a == 0:
-        ret_str = ret_str + "EV"
+        ret_str += "EV"
     else:
         r = Ratio(a, b)
         ret_str = ret_str + r.__repr__() + " EV"
@@ -1188,10 +1184,7 @@ def s2n_intel(str):
 # ratio object that eventually will be able to reduce itself to lowest
 # common denominator for printing
 def gcd(a, b):
-    if b == 0:
-        return a
-    else:
-        return gcd(b, a % b)
+    return a if b == 0 else gcd(b, a % b)
 
 class Ratio:
     def __init__(self, num, den):
@@ -1268,11 +1261,8 @@ class EXIF_header:
     # convert offset to string
     def n2s(self, offset, length):
         s = ''
-        for dummy in range(length):
-            if self.endian == 'I':
-                s = s + chr(offset & 0xFF)
-            else:
-                s = chr(offset & 0xFF) + s
+        for _ in range(length):
+            s = s + chr(offset & 0xFF) if self.endian == 'I' else chr(offset & 0xFF) + s
             offset = offset >> 8
         return s
 

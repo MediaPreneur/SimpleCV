@@ -138,14 +138,14 @@ class JpegStreamer():
         """
         Returns the JpegStreams Webbrowser-appropriate URL, if not provided in the constructor, it defaults to "http://localhost:8080"
         """
-        return "http://" + self.host + ":" + str(self.port) + "/"
+        return f"http://{self.host}:{str(self.port)}/"
 
 
     def streamUrl(self):
         """
         Returns the URL of the MJPEG stream. If host and port are not set in the constructor, defaults to "http://localhost:8080/stream/"
         """
-        return self.url() + "stream"
+        return f"{self.url()}stream"
 
 
 
@@ -240,23 +240,23 @@ class VideoStream():
                 return
 
 
-            elif (targettime < realtime - frametime):
+            elif targettime < realtime - frametime:
                 #we're at least one frame behind
                 framesbehind = int((realtime - targettime) * self.fps) + 1
                 #figure out how many frames behind we are
 
 
                 lastframes = framesbehind / 2
-                for i in range(0, lastframes):
+                for _ in range(lastframes):
                     self.framecount += 1
                     cv.WriteFrame(self.writer, self.lastframe.getBitmap())
 
 
                 theseframes = framesbehind - lastframes
-                for i in range(0, theseframes):
+                for _ in range(theseframes):
                     self.framecount += 1
                     cv.WriteFrame(self.writer, img.getBitmap())
-                #split missing frames evenly between the prior and current frame
+                        #split missing frames evenly between the prior and current frame
             else: #we are on track
                 self.framecount += 1
                 cv.WriteFrame(self.writer, img.getBitmap())

@@ -47,10 +47,9 @@ while not d.isDone():
         compositeframe = compositeframe + depthbin
         #we're painting -- keep adding to the composite frame
 
-    else:
-        if (time.time() - laststroke > offtime):
+    elif (time.time() - laststroke > offtime):
         #if we're not painting for a certain amount of time, reset
-            compositeframe = Image(cam.getImage().getEmpty())
+        compositeframe = Image(cam.getImage().getEmpty())
 
     frame = ((imgscene - compositeframe.binarize(10).invert()) + compositeframe).flipHorizontal()
     #subtract our composite frame from our camera image, then add it back in in red. False = Show red channel as red, [0] = first (red) channel

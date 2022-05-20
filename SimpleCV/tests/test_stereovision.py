@@ -58,19 +58,16 @@ def imgDiffs(test_imgs,name_stem,tolerance,path):
 #Save a list of images to a standard path.
 def imgSaves(test_imgs, name_stem, path=standard_path):
     count = len(test_imgs)
-    for idx in range(0,count):
+    for idx in range(count):
         fname = standard_path+name_stem+str(idx)+".jpg"
         test_imgs[idx].save(fname)#,quality=95)
 
 #perform the actual image save and image diffs.
 def perform_diff(result,name_stem,tolerance=2.0,path=standard_path):
-    if(VISUAL_TEST): # save the correct images for a visual test
+    if VISUAL_TEST: # save the correct images for a visual test
         imgSaves(result,name_stem,path)
-    else: # otherwise we test our output against the visual test
-        if( imgDiffs(result,name_stem,tolerance,path) ):
-            assert False
-        else:
-            pass
+    elif ( imgDiffs(result,name_stem,tolerance,path) ):
+        assert False
 
 #These function names are required by nose test, please leave them as is
 def setup_context():
@@ -116,63 +113,57 @@ def test_findDisparityMap():
     perform_diff(dips,name_stem)
 
 def test_eline():
-    for pairs in correct_pairs :
+    for pairs in correct_pairs:
         img1 = Image(pairs[0])
         img2 = Image(pairs[1])
         StereoImg = StereoImage(img1,img2)
         F,ptsLeft,ptsRight = StereoImg.findFundamentalMat()
-        for pts in ptsLeft :
+        for pts in ptsLeft:
             line = StereoImg.Eline(pts,F,2)
-            if (line == None):
+            if line is None:
                 assert False
 
 
 def test_projectPoint():
-    for pairs in correct_pairs :
+    for pairs in correct_pairs:
         img1 = Image(pairs[0])
         img2 = Image(pairs[1])
         StereoImg = StereoImage(img1,img2)
         H,ptsLeft,ptsRight = StereoImg.findHomography()
-        for pts in ptsLeft :
+        for pts in ptsLeft:
             line = StereoImg.projectPoint(pts,H,2)
-            if (line == None):
+            if line is None:
                 assert False
 
 
 def test_StereoCalibration():
     cam = StereoCamera()
-    try :
+    try:
         cam1 = Camera(0)
         cam2 = Camera(1)
         cam1.getImage()
         cam2.getImage()
-        try :
+        try:
             cam = StereoCamera()
             calib = cam.StereoCalibration(0,1,nboards=1)
-            if (calib):
-                assert True
-            else :
+            if not calib:
                 assert False
         except:
             assert False
-    except :
-        assert True
+    except:
+        pass
 
 def test_loadCalibration():
     cam = StereoCamera()
     calbib =  cam.loadCalibration("Stereo","./StereoVision/")
-    if (calbib) :
-        assert True
-    else :
+    if not calbib:
         assert False
 
 def test_StereoRectify():
     cam = StereoCamera()
     calib = cam.loadCalibration("Stereo","./StereoVision/")
     rectify = cam.stereoRectify(calib)
-    if rectify :
-        assert True
-    else :
+    if not rectify:
         assert False
 
 def test_getImagesUndistort():
@@ -182,7 +173,5 @@ def test_getImagesUndistort():
     calib = cam.loadCalibration("Stereo","./StereoVision/")
     rectify = cam.stereoRectify(calib)
     rectLeft,rectRight = cam.getImagesUndistort(img1,img2,calib,rectify)
-    if rectLeft and rectRight :
-        assert True
-    else :
+    if not rectLeft or not rectRight:
         assert False

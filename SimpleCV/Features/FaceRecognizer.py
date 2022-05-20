@@ -108,12 +108,9 @@ class FaceRecognizer():
             return None
 
         self.labels_set = list(set(labels))
-        i = 0
-        for label in self.labels_set:
+        for i, label in enumerate(self.labels_set):
             self.labels_dict.update({label: i})
             self.labels_dict_rev.update({i: label})
-            i += 1
-
         if len(self.labels_set) < 2:
             warnings.warn("At least two classes/labels are required"
                           "for training. Training not inititated.")
@@ -271,13 +268,12 @@ class FaceRecognizer():
             return None
 
         self.model.load(filename)
-        loadfile = open(filename, "r")
-        for line in loadfile.readlines():
-            if "cols" in line:
-                match = re.search("(?<=\>)\w+", line)
-                tsize = int(match.group(0))
-                break
-        loadfile.close()
+        with open(filename, "r") as loadfile:
+            for line in loadfile.readlines():
+                if "cols" in line:
+                    match = re.search("(?<=\>)\w+", line)
+                    tsize = int(match.group(0))
+                    break
         w = int(tsize ** 0.5)
         h = tsize / w
         while(w * h != tsize):

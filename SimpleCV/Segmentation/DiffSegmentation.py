@@ -48,27 +48,20 @@ class DiffSegmentation(SegmentationBase):
         """
         if( img is None ):
             return
-        if( self.mLastImg == None ):
-            if( self.mGrayOnlyMode ):
+        if self.mLastImg is None:
+            if self.mGrayOnlyMode:
                 self.mLastImg = img.toGray()
                 self.mDiffImg = Image(self.mLastImg.getEmpty(1))
-                self.mCurrImg = None
             else:
                 self.mLastImg = img
                 self.mDiffImg = Image(self.mLastImg.getEmpty(3))
-                self.mCurrImg = None
+            self.mCurrImg = None
         else:
             if( self.mCurrImg is not None ): #catch the first step
                 self.mLastImg = self.mCurrImg
 
-            if( self.mGrayOnlyMode ):
-                self.mColorImg = img
-                self.mCurrImg = img.toGray()
-            else:
-                self.mColorImg = img
-                self.mCurrImg = img
-
-
+            self.mColorImg = img
+            self.mCurrImg = img.toGray() if self.mGrayOnlyMode else img
             cv.AbsDiff(self.mCurrImg.getBitmap(),self.mLastImg.getBitmap(),self.mDiffImg.getBitmap())
 
         return
@@ -78,10 +71,7 @@ class DiffSegmentation(SegmentationBase):
         """
         Returns true if the camera has a segmented image ready.
         """
-        if( self.mDiffImg is None ):
-            return False
-        else:
-            return True
+        return self.mDiffImg is not None
 
 
     def isError(self):
@@ -120,20 +110,22 @@ class DiffSegmentation(SegmentationBase):
         and black the background.
         """
         retVal = None
-        if( whiteFG ):
-            retVal = self.mDiffImg.binarize(thresh=self.mThreshold)
+        if whiteFG:
+            return self.mDiffImg.binarize(thresh=self.mThreshold)
         else:
-            retVal = self.mDiffImg.binarize(thresh=self.mThreshold).invert()
-        return retVal
+            return self.mDiffImg.binarize(thresh=self.mThreshold).invert()
 
     def getSegmentedBlobs(self):
         """
         return the segmented blobs from the fg/bg image
         """
-        retVal = []
-        if( self.mColorImg is not None and self.mDiffImg is not None ):
-            retVal = self.mBlobMaker.extractFromBinary(self.mDiffImg.binarize(thresh=self.mThreshold),self.mColorImg)
-        return retVal
+        return (
+            self.mBlobMaker.extractFromBinary(
+                self.mDiffImg.binarize(thresh=self.mThreshold), self.mColorImg
+            )
+            if (self.mColorImg is not None and self.mDiffImg is not None)
+            else []
+        )
 
     def __getstate__(self):
         mydict = self.__dict__.copy()
